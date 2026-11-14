@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { LearningWorkspace } from '../src/components/LearningWorkspace';
+import { TutorPanel } from '../src/components/TutorPanel';
 import type { LearningSession } from '../src/shared/types';
 
 vi.mock('@monaco-editor/react', () => ({
@@ -46,18 +47,44 @@ describe('adaptive practice layout', () => {
         onSkip={() => {}}
         onNavigate={() => {}}
         onRestoreAttempt={() => {}}
-        onOpenSource={() => {}}
+        onShowTutor={() => {}}
       />
     );
     expect(html).not.toContain('THIS_IS_CHAT_INTRODUCTION');
     expect(html).not.toContain('THIS_IS_CHAT_EXPLANATION');
     expect(html).toContain('Write a function');
-    expect(html).toContain('src/sample.js:1');
+    expect(html).toContain('View instructions in AI Tutor');
+    expect(html).not.toContain('src/sample.js:1');
+    expect(html).not.toContain('Understand functions');
     expect(html).toContain('data-testid="monaco-editor"');
     expect(html).toContain('Evaluate my solution');
-    expect(html).toContain('Evaluation criteria');
+    expect(html).not.toContain('Evaluation criteria');
     expect(html).toContain('Challenge history');
     expect(html).toContain('Previous challenge');
     expect(html).toContain('Similar challenge');
   });
+  it('shows challenge instructions and source references in AI Tutor with navigation back to editor', () => {
+    const entry = { id: 'challenge-1', session, code: 'function identity(x) {}', attempts: [], status: 'active' as const, createdAt: '2026-11-14T00:00:00Z' };
+    const html = renderToStaticMarkup(
+      <TutorPanel
+        repository="/repo"
+        context="Practice"
+        code=""
+        activeChallenge={entry}
+        challengeEntries={[entry]}
+        focusChallengeId="challenge-1"
+        onOpenChallenge={() => {}}
+        onOpenSource={() => {}}
+        messages={[{ role: 'assistant', content: 'Here is your challenge', challengeId: 'challenge-1' }]}
+      />
+    );
+    expect(html).toContain('CURRENT CHALLENGE');
+    expect(html).toContain('Return the given input.');
+    expect(html).toContain('THIS_IS_CHAT_EXPLANATION');
+    expect(html).toContain('src/sample.js:1');
+    expect(html).toContain('Return input unchanged');
+    expect(html).toContain('Open in editor');
+    expect(html).toContain('Open linked challenge');
+  });
+
 });
