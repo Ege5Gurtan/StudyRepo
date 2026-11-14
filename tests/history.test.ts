@@ -36,6 +36,16 @@ describe('challenge history state', () => {
     expect(selectChallenge(archive, 999)).toBe(archive);
   });
 
+  it('keeps the exact submitted snapshot when the draft changes before review returns', () => {
+    let archive = addChallenge(emptyArchive(), makeSession('Async review'));
+    const submittedCode = 'return 1;';
+    archive = changeChallengeCode(archive, submittedCode);
+    archive = changeChallengeCode(archive, 'return 2;');
+    archive = recordEvaluation(archive, { status: 'needs_revision', feedback: 'Review of first version', criteria: [] }, submittedCode);
+    expect(archive.entries[0].code).toBe('return 2;');
+    expect(archive.entries[0].attempts[0].code).toBe('return 1;');
+  });
+
   it('rejects oversized and malformed archives at IPC boundary', () => {
     const archive = addChallenge(emptyArchive(), makeSession('First'));
     expect(() => validateArchive({ ...archive, activeIndex: 20 })).toThrow();
