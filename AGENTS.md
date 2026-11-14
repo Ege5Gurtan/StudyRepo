@@ -50,3 +50,10 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - `electron/database.ts` uses the `learning_archives` SQLite table for stored history; the only renderer access is restricted `learning:history:get/save` IPC, guarded by imported-repository validation and archive size/shape limits. Repository removal deletes its archive, never source files.
 - In Practice, navigating backwards/forwards must restore code and review feedback for the selected challenge. Keep previous attempts immutable; allow users to restore an earlier attempt into the scratchpad without silently overwriting history.
 - Do not make AI approval a requirement for moving on: users may skip to the next topic. Older challenges remain accessible, and new learning goals do not wipe saved history.
+
+## Continuing lessons and chat-triggered practice
+
+- A generated learning plan contains only a short set of topics, not the lifetime of a learning journey. On the final topic, `advanceLearning` starts `extend` mode to generate a fresh set of topics and the first challenge in that set.
+- Direct requests such as "Give me another set of challenges" should create structured Practice challenges through `generateLesson` rather than a text-only list. The explicit chat intent helper lives in `src/study/chat-intent.ts`; keep ordinary tutoring questions conversational.
+- Maintain both student and assistant turns in `TutorPanel` when resolving async responses. `src/study/chat-messages.ts` contains immutable operations; tests guard against lost user messages.
+- Per-repository challenge history persists across batches; retain source protections, output validation and storage limits. Do not claim unlimited storage or runtime compilation.
