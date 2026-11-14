@@ -20,8 +20,13 @@ StudyRepo is envisioned as a companion to your IDE, not a replacement for it. It
 - Use a unified repository-first navigation: Overview, Explorer, Learn, Practice, Progress, and Settings.
 - In Practice, edit a sample Unreal C++ exercise in Monaco and run clearly labeled pattern checks (not a C++ compiler).
 - Show or hide a shared mock Tutor panel in Explorer, Learn, and Practice. The tutor uses example responses and does not call an AI model.
+- Analyze a local repository on demand and browse/search classes, interfaces, methods, functions, imports, and basic C++ declarations from Explorer. Click a symbol to jump to its source line. The index is persisted locally in SQLite.
 - Complete a sample quiz in Learn and keep quiz attempts and studied files in a local SQLite database.
 - Use a dark or light theme and resize the explorer panel.
+
+## Repository intelligence v1
+
+Open an imported repository, choose **Explorer**, and press **Analyze source** in the **Symbols** section below the file tree. Search by symbol name or source path, then select a result to open its file at the indexed line. Use **Reindex source** to refresh after repository changes. Source file hashes, symbol records, and index metadata live in the application's SQLite database, not in the repository.
 
 ## Planned capabilities
 
@@ -90,6 +95,8 @@ This produces local application assets in `dist/` and `dist-electron/`; it does 
 - Repository analysis is read-only and ignores common generated directories and symbolic links. Files must be UTF-8 text and no larger than 2 MB. Unreadable files and directories are reported or skipped.
 - Language detection is based on file extensions. File progress means a file was opened, not that its contents were mastered; deleted files can remain in history.
 - The AI provider is a placeholder, not a model. The quiz and sample Practice exercise are generic examples, not generated from the repository. Practice checks are text-pattern checks only; no code execution engine or C++ compiler is included.
+- Repository intelligence v1 indexes TypeScript/JavaScript with the TypeScript syntax parser and supports **limited, heuristic C++** declarations and `#include` statements. It does not yet resolve full dependency graphs, references, overloads, macros, or semantic call relationships.
+- Indexing is manual (Explorer → Analyze source / Reindex source). Index entries are snapshots; reindex after edits. It reads up to 1,500 supported source files (maximum 256 KiB each, 20,000 extracted symbols). Files skipped for size, encoding, or accessibility are counted. Repository files are never modified.
 - SQLite data is stored in Electron's user-data directory, outside imported repositories. There is currently no data export, repository removal, migration UI, or installer.
 
 ## Roadmap
