@@ -12,8 +12,7 @@ import { SymbolExplorer } from './components/SymbolExplorer';
 import { LearningWorkspace } from './components/LearningWorkspace';
 import { TutorPanel } from './components/TutorPanel';
 import { addChallenge, changeChallengeCode, recordEvaluation, selectChallenge, setChatMessages, skipChallenge } from './study/history';
-import { withStudentMessage, withTutorReply } from './study/chat-messages';
-import { emptyConversations, newConversation, selectConversation, changeConversationArchive, updateConversationById, titleConversationIfNew, nameConversationById, renameConversation, deleteConversation } from './study/conversations';
+import { emptyConversations, newConversation, selectConversation, changeConversationArchive, updateConversationById, titleConversationIfNew, appendConversationMessage, nameConversationById, renameConversation, deleteConversation } from './study/conversations';
 
 self.MonacoEnvironment = {
   getWorker(_workerId, label) {
@@ -220,9 +219,7 @@ export default function App() {
       : tutorLearningCode;
     const requestFile = requestContext === 'Explorer' ? current?.path : undefined;
     const existingLesson = !!previousEntry && !awaitingGoal;
-    setConversationStore(old => updateConversationById(old, conversationId, a => ({
-      ...a, messages: withStudentMessage(a.messages, q).slice(-40)
-    })));
+    setConversationStore(old => appendConversationMessage(old, conversationId, { role: 'user', content: q }));
     try {
       let answer: string;
       if (!existingLesson && requestContext === 'Practice') {
@@ -262,14 +259,10 @@ export default function App() {
           code: requestCode.slice(0, 12000), question: q, history: previousMessages.slice(-10)
         });
       }
-      setConversationStore(old => updateConversationById(old, conversationId, a => ({
-        ...a, messages: withTutorReply(a.messages, answer).slice(-40)
-      })));
+      setConversationStore(old => appendConversationMessage(old, conversationId, { role: 'assistant', content: answer }));
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      setConversationStore(old => updateConversationById(old, conversationId, a => ({
-        ...a, messages: withTutorReply(a.messages, 'Unable to complete the request: ' + message).slice(-40)
-      })));
+      setConversationStore(old => appendConversationMessage(old, conversationId, { role: 'assistant', content: 'Unable to complete the request: ' + message }));
     } finally {
       pendingRef.current.delete(pendingKey);
       setPendingConversations(current => current.filter(key => key !== pendingKey));
