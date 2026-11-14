@@ -287,8 +287,8 @@ export default function App() {
         sourceFile={page === 'Explorer' ? current?.path : undefined}
         code={page === 'Explorer' ? (selection.code || current?.content.slice(0, 12000) || '') : tutorLearningCode}
         learningStarted={!!learning}
-        onStartLearning={startLearning}
-        onGenerateChallenges={generateChallengesFromChat}
+        onStartLearning={page === 'Practice' ? startLearning : undefined}
+        onGenerateChallenges={page === 'Practice' ? generateChallengesFromChat : undefined}
         messages={archive.messages}
         onMessagesChange={messages => {
           const id = conversationStore.activeId;
