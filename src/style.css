@@ -389,3 +389,45 @@ input { accent-color: #8270e4; }
   .app > main > .workspace-with-tutor { padding-right: 0; }
   .app > main > .tutor-panel { width: min(300px, 65vw); }
 }
+
+/* Code-first Practice: instructions live in the linked Tutor conversation. */
+.learning-workspace .challenge-compact-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--card);
+}
+.challenge-compact-label { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.challenge-compact-label strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+.challenge-chat-link, .tutor-challenge-heading button, .tutor-message-challenge-link {
+  border: 0;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 12px;
+}
+.challenge-compact-bar > button { flex: 0 0 auto; }
+.tutor-challenge-details {
+  border: 1px solid var(--accent);
+  border-radius: 9px;
+  padding: 12px;
+  background: var(--card);
+  overflow-wrap: anywhere;
+}
+.tutor-challenge-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.tutor-challenge-details h3 { margin: 9px 0; font-size: 14px; }
+.tutor-challenge-details p { font-size: 12px; line-height: 1.55; }
+.tutor-challenge-details details { font-size: 12px; }
+.tutor-challenge-details summary { cursor: pointer; color: var(--accent); }
+.tutor-challenge-sources { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+.tutor-challenge-sources button { border: 1px solid var(--border); border-radius: 5px; background: var(--side); color: var(--accent); font-size: 11px; padding: 5px; }
+.tutor-message-challenge-link { display: block; padding: 7px 0 0; text-align: left; }
+@media (max-width: 900px) {
+  .learning-workspace .challenge-compact-bar { flex-wrap: wrap; }
+  .challenge-compact-label { flex-basis: 100%; }
+}

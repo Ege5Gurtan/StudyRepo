@@ -18,10 +18,10 @@ interface Props {
   onSkip: () => void;
   onNavigate: (index: number) => void;
   onRestoreAttempt: (index: number) => void;
-  onOpenSource: (file: string, line: number) => void;
+  onShowTutor: () => void;
 }
 
-export function LearningWorkspace({ session, challengeId, entries, activeIndex, attempts, code, onCodeChange, evaluation, busy, error, onEvaluate, onRestart, onAdvance, onSkip, onNavigate, onRestoreAttempt, onOpenSource }: Props) {
+export function LearningWorkspace({ session, challengeId, entries, activeIndex, attempts, code, onCodeChange, evaluation, busy, error, onEvaluate, onRestart, onAdvance, onSkip, onNavigate, onRestoreAttempt, onShowTutor }: Props) {
   if (!session) return <section className="practice-workspace learning-welcome" aria-label="Adaptive learning workspace">
     <div className="learning-hero">
       <p className="eyebrow">PERSONALIZED LEARNING</p>
@@ -31,7 +31,6 @@ export function LearningWorkspace({ session, challengeId, entries, activeIndex, 
       {entries.length > 0 && <div className="saved-learning-list"><h3>Previous challenges</h3>{entries.map((entry, index) => <button key={entry.id} disabled={busy} onClick={() => onNavigate(index)}>{index + 1}. {entry.session.lesson.challenge.title} <span>↗</span></button>)}</div>}
     </div>
   </section>;
-  const topic = session.topics[session.topicIndex];
   const challenge = session.lesson.challenge;
   const finalTopic = session.topicIndex >= session.topics.length - 1;
   const latest = activeIndex === entries.length - 1;
@@ -56,15 +55,10 @@ export function LearningWorkspace({ session, challengeId, entries, activeIndex, 
         <small>{entry.status === 'skipped' ? 'Skipped' : entry.attempts.some(a => a.evaluation.status === 'passed') ? 'AI passed' : entry.attempts.length ? 'Reviewed' : 'Draft'}</small>
       </button>)}</div>
     </nav>
-    <div className="practice-problem learning-problem">
-      <div className="learning-topline"><span className="eyebrow">ADAPTIVE LEARNING · TOPIC {session.topicIndex + 1} OF {session.topics.length}</span><button className="learning-restart" onClick={onRestart}>New learning goal</button></div>
-      <h2>{topic?.title ?? challenge.title}</h2>
-      <p className="muted">{topic?.objective}</p>
-      <div className="learning-plan">{session.topics.map((item, index) => <span className={index === session.topicIndex ? 'learning-active-topic' : ''} key={item.id}>{index + 1}. {item.title}</span>)}</div>
-      {session.lesson.references.length > 0 && <div className="learning-references"><span className="eyebrow">FROM YOUR REPOSITORY</span>{session.lesson.references.map((ref, index) => <button key={index} onClick={() => onOpenSource(ref.file, ref.startLine)}>{ref.file}:{ref.startLine}–{ref.endLine} ↗</button>)}</div>}
-      <h2 className="learning-challenge-title">{challenge.title}</h2>
-      <p>{challenge.description}</p>
-      <details className="learning-criteria"><summary>Evaluation criteria ({challenge.criteria.length})</summary><ul>{challenge.criteria.map((criterion, index) => <li key={index}>{criterion}</li>)}</ul></details>
+    <div className="challenge-compact-bar">
+      <div className="challenge-compact-label"><span className="eyebrow">CHALLENGE {activeIndex + 1}</span><strong>{challenge.title}</strong></div>
+      <button type="button" className="challenge-chat-link" onClick={onShowTutor}>View instructions in AI Tutor →</button>
+      <button type="button" className="learning-restart" onClick={onRestart}>New learning goal</button>
     </div>
     <div className="practice-editor">
       <div className="practice-editor-heading">{challenge.language} · Your scratchpad (repository files are unchanged)</div>

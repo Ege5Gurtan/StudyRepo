@@ -46,7 +46,7 @@ export interface IndexSummary {
   skipped: number;
   indexedAt: string | null;
 }
-export interface TutorMessage { role: 'user' | 'assistant'; content: string }
+export interface TutorMessage { role: 'user' | 'assistant'; content: string; challengeId?: string }
 export interface TutorRequest {
   repository: string;
   context: 'Practice' | 'Explorer';
