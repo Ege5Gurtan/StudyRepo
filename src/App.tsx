@@ -138,7 +138,7 @@ export default function App() {
       const result = await window.studyRepo.evaluateSolution({ repository: scan.repository.path, lesson: activeEntry.session.lesson, code: submittedCode });
       if (epoch === learningEpoch.current) {
         setArchive(old => old.entries[old.activeIndex]?.id === id
-          ? recordEvaluation(old, result)
+          ? recordEvaluation(old, result, submittedCode)
           : old);
       }
     } catch (e) { if (epoch === learningEpoch.current) setLearningError(String(e)); }
