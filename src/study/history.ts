@@ -10,6 +10,21 @@ export function addChallenge(archive: LearningArchive, session: LearningSession)
   return { ...archive, entries: [...archive.entries, entry], activeIndex: archive.entries.length };
 }
 
+// For challenges started by workspace actions (Skip / Next / Similar), persist
+// the generated lesson in Tutor alongside its challenge, rather than only
+// updating the Monaco scratchpad. Keep this atomic within the conversation.
+export function addChallengeWithTutorExplanation(archive: LearningArchive, session: LearningSession, skipPrevious = false): LearningArchive {
+  const updated = addChallenge(skipPrevious ? skipChallenge(archive) : archive, session);
+  const challengeId = updated.entries[updated.activeIndex].id;
+  const content = [
+    '### ' + session.lesson.challenge.title,
+    session.lesson.introduction,
+    session.lesson.explanation,
+    'Challenge: ' + session.lesson.challenge.description
+  ].filter(Boolean).join('\n\n').slice(0, 16000);
+  return { ...updated, messages: [...updated.messages, { role: 'assistant', content, challengeId }].slice(-40) };
+}
+
 export function selectChallenge(archive: LearningArchive, index: number): LearningArchive {
   if (!Number.isInteger(index) || index < 0 || index >= archive.entries.length) return archive;
   return { ...archive, activeIndex: index };
