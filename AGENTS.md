@@ -82,3 +82,9 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - The app renders one persistent `TutorPanel` for its current repository/conversation outside page-conditional content. Hide it on Overview/Settings without unmounting it. Preserve in-flight replies when switching workspace tabs.
 - `electron/tutor-source.ts` resolves explicitly requested source filenames against the imported repository tree, protects private paths, retrieves via `readRepositoryFile`, and provides bounded line-numbered excerpts. Truncated excerpts must be labeled, and line ranges can be requested in later messages. Never claim to have inspected omitted lines.
 - Existing normal Tutor and structured-challenge action routes both receive named-file context. Avoid shipping the full repository to a provider; keep bounded, opt-in source retrieval.
+
+## In-flight conversation isolation
+
+- The app-level `sendConversationMessage` owns asynchronous Tutor requests, not a `TutorPanel` tied to a selected conversation. Use the initiating repository path and immutable conversation ID for every response and generated challenge.
+- Keep pending state indexed by repository and conversation; switching chats must not cancel work or update a different conversation. `appendConversationMessage` updates only a matching saved ID and ignores replies to deleted conversations.
+- Chat persistence remains the existing SQLite conversation archive, and rehydrated conversations need not retain transient Thinking states after application exit.

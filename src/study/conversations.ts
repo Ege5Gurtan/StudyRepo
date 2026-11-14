@@ -1,4 +1,4 @@
-import type { ConversationStore, LearningArchive, LearningConversation } from '../shared/types';
+import type { ConversationStore, LearningArchive, LearningConversation, TutorMessage } from '../shared/types';
 import { emptyArchive, validateArchive } from './history';
 
 export const emptyConversations = (): ConversationStore => ({ conversations: [], activeId: null });
@@ -33,6 +33,19 @@ export function updateConversationById(store: ConversationStore, id: string, upd
 export function titleConversationIfNew(store: ConversationStore, prompt: string): ConversationStore {
   return { ...store, conversations: store.conversations.map(item =>
     item.id === store.activeId && item.title === 'New conversation'
+      ? { ...item, title: conversationTitle(prompt), updatedAt: new Date().toISOString() }
+      : item) };
+}
+
+export function appendConversationMessage(store: ConversationStore, id: string, message: TutorMessage): ConversationStore {
+  return updateConversationById(store, id, archive => ({
+    ...archive, messages: [...archive.messages, message].slice(-40)
+  }));
+}
+
+export function nameConversationById(store: ConversationStore, id: string, prompt: string): ConversationStore {
+  return { ...store, conversations: store.conversations.map(item =>
+    item.id === id && item.title === 'New conversation'
       ? { ...item, title: conversationTitle(prompt), updatedAt: new Date().toISOString() }
       : item) };
 }

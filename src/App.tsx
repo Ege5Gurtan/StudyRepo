@@ -12,7 +12,7 @@ import { SymbolExplorer } from './components/SymbolExplorer';
 import { LearningWorkspace } from './components/LearningWorkspace';
 import { TutorPanel } from './components/TutorPanel';
 import { addChallenge, changeChallengeCode, recordEvaluation, selectChallenge, setChatMessages, skipChallenge } from './study/history';
-import { emptyConversations, newConversation, selectConversation, changeConversationArchive, updateConversationById, titleConversationIfNew, renameConversation, deleteConversation } from './study/conversations';
+import { emptyConversations, newConversation, selectConversation, changeConversationArchive, updateConversationById, titleConversationIfNew, appendConversationMessage, nameConversationById, renameConversation, deleteConversation } from './study/conversations';
 
 self.MonacoEnvironment = {
   getWorker(_workerId, label) {
@@ -36,6 +36,9 @@ export default function App() {
   const [jump, setJump] = useState<{ file: string; line: number } | null>(null);
   const explorerEditor = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const learningEpoch = useRef(0);
+  const conversationRef = useRef<string | null>(null);
+  const pendingRef = useRef(new Set<string>());
+  const [pendingConversations, setPendingConversations] = useState<string[]>([]);
   const [page, setPage] = useState<Page>('Overview');
   const [tabs, setTabs] = useState<OpenFile[]>([]);
   const [active, setActive] = useState('');
@@ -44,6 +47,7 @@ export default function App() {
   const [tutorVisible, setTutorVisible] = useState(true);
   const [conversationStore, setConversationStore] = useState<ConversationStore>(emptyConversations);
   const activeConversation = conversationStore.conversations.find(item => item.id === conversationStore.activeId);
+  conversationRef.current = conversationStore.activeId;
   const archive: LearningArchive = activeConversation?.archive ?? { entries: [], activeIndex: -1, messages: [] };
   const setArchive = (update: LearningArchive | ((archive: LearningArchive) => LearningArchive)) => {
     setConversationStore(old => changeConversationArchive(old, current =>
@@ -198,8 +202,73 @@ export default function App() {
   async function generateChallengesFromChat(request: string, scope: 'single' | 'set'): Promise<string> {
     return advanceLearning(scope === 'set' ? 'extend' : 'focused', false, request);
   }
+  async function sendConversationMessage(question: string) {
+    const q = question.trim();
+    const repository = scan?.repository.path;
+    const conversationId = conversationStore.activeId;
+    if (!q || !repository || !conversationId || !archiveReady) return;
+    const pendingKey = repository + ':' + conversationId;
+    if (pendingRef.current.has(pendingKey)) return;
+    pendingRef.current.add(pendingKey);
+    setPendingConversations(current => [...current, pendingKey]);
+    const previousMessages = archive.messages;
+    const previousEntry = archive.entries[archive.activeIndex];
+    const requestContext = page === 'Explorer' ? 'Explorer' : 'Practice';
+    const requestCode = requestContext === 'Explorer'
+      ? (selection.code || current?.content.slice(0, 12000) || '')
+      : tutorLearningCode;
+    const requestFile = requestContext === 'Explorer' ? current?.path : undefined;
+    const existingLesson = !!previousEntry && !awaitingGoal;
+    setConversationStore(old => appendConversationMessage(old, conversationId, { role: 'user', content: q }));
+    try {
+      let answer: string;
+      if (!existingLesson && requestContext === 'Practice') {
+        const lesson = await window.studyRepo.generateLesson({ repository, goal: q, mode: 'start' });
+        setConversationStore(old => nameConversationById(
+          updateConversationById(old, conversationId, a => addChallenge(a, lesson)), conversationId, q));
+        if (conversationRef.current === conversationId) setAwaitingGoal(false);
+        answer = lesson.lesson.introduction + '\n\n' + lesson.lesson.explanation;
+      } else if (requestContext === 'Practice') {
+        const action = await window.studyRepo.askTutorWithActions({
+          repository, context: 'Practice', code: requestCode.slice(0, 12000),
+          question: q, history: previousMessages.slice(-10)
+        });
+        if (action.type === 'message') answer = action.text;
+        else {
+          const currentSession = previousEntry?.session;
+          const mode = currentSession
+            ? (action.scope === 'set' ? 'extend' : 'focused') : 'start';
+          const lesson = await window.studyRepo.generateLesson({
+            repository,
+            goal: currentSession?.goal ?? action.focus,
+            mode,
+            topics: currentSession?.topics,
+            topicIndex: currentSession?.topicIndex,
+            previousChallenge: currentSession?.lesson.challenge,
+            focus: action.focus
+          });
+          setConversationStore(old => updateConversationById(old, conversationId, a => addChallenge(a, lesson)));
+          if (conversationRef.current === conversationId) setAwaitingGoal(false);
+          answer = action.scope === 'set'
+            ? 'A new set of ' + lesson.topics.length + ' topics is ready. I opened "' + lesson.lesson.challenge.title + '" in this conversation.'
+            : 'I created "' + lesson.lesson.challenge.title + '" in your coding workspace.';
+        }
+      } else {
+        answer = await window.studyRepo.askTutor({
+          repository, context: 'Explorer', sourceFile: requestFile,
+          code: requestCode.slice(0, 12000), question: q, history: previousMessages.slice(-10)
+        });
+      }
+      setConversationStore(old => appendConversationMessage(old, conversationId, { role: 'assistant', content: answer }));
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      setConversationStore(old => appendConversationMessage(old, conversationId, { role: 'assistant', content: 'Unable to complete the request: ' + message }));
+    } finally {
+      pendingRef.current.delete(pendingKey);
+      setPendingConversations(current => current.filter(key => key !== pendingKey));
+    }
+  }
   function createChat() {
-    learningEpoch.current++;
     setLearningBusy(false);
     setConversationStore(old => newConversation(old));
     setAwaitingGoal(true);
@@ -208,7 +277,6 @@ export default function App() {
   }
   function openChat(id: string) {
     if (id === conversationStore.activeId) { setPage('Practice'); return; }
-    learningEpoch.current++;
     setLearningBusy(false);
     setConversationStore(old => selectConversation(old, id));
     const next = conversationStore.conversations.find(item => item.id === id);
@@ -290,6 +358,8 @@ export default function App() {
         onStartLearning={page === 'Practice' ? startLearning : undefined}
         onGenerateChallenges={page === 'Practice' ? generateChallengesFromChat : undefined}
         messages={archive.messages}
+        pending={pendingConversations.includes(scan.repository.path + ':' + (conversationStore.activeId ?? ''))}
+        onSendMessage={question => { void sendConversationMessage(question); }}
         onMessagesChange={messages => {
           const id = conversationStore.activeId;
           if (id) setConversationStore(old => updateConversationById(old, id, a => setChatMessages(a, messages)));

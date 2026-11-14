@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addChallenge, emptyArchive } from '../src/study/history';
-import { changeConversationArchive, conversationTitle, deleteConversation, emptyConversations, migrateLegacyArchive, newConversation, renameConversation, selectConversation, titleConversationIfNew, updateConversationById, validateConversationStore } from '../src/study/conversations';
+import { appendConversationMessage, changeConversationArchive, conversationTitle, deleteConversation, emptyConversations, migrateLegacyArchive, newConversation, renameConversation, selectConversation, titleConversationIfNew, updateConversationById, validateConversationStore } from '../src/study/conversations';
 import type { LearningSession } from '../src/shared/types';
 
 const lesson: LearningSession = {
@@ -27,6 +27,38 @@ describe('repository-scoped conversations', () => {
     expect(store.conversations.find(c => c.id === first)?.archive.messages).toEqual([]);
     expect(store.conversations.find(c => c.id === second)?.archive.messages).toHaveLength(2);
     expect(validateConversationStore(store)).toEqual(store);
+  });
+
+  it('delivers a delayed reply to the initiating conversation after switching A → B → A', async () => {
+    let store = newConversation(emptyConversations());
+    const a = store.activeId!;
+    store = appendConversationMessage(store, a, { role: 'user', content: 'Can you make a challenge?' });
+    let release!: (reply: string) => void;
+    const pending = new Promise<string>(resolve => { release = resolve; });
+    const request = pending.then(reply => { store = appendConversationMessage(store, a, { role: 'assistant', content: reply }); });
+    store = newConversation(store);
+    const b = store.activeId!;
+    store = appendConversationMessage(store, b, { role: 'user', content: 'Another topic' });
+    release('I created the coding challenge in conversation A.');
+    await request;
+    expect(store.activeId).toBe(b);
+    expect(store.conversations.find(item => item.id === a)?.archive.messages).toEqual([
+      { role: 'user', content: 'Can you make a challenge?' },
+      { role: 'assistant', content: 'I created the coding challenge in conversation A.' }
+    ]);
+    expect(store.conversations.find(item => item.id === b)?.archive.messages).toEqual([
+      { role: 'user', content: 'Another topic' }
+    ]);
+    store = selectConversation(store, a);
+    expect(store.conversations.find(item => item.id === store.activeId)?.archive.messages.at(-1)?.role).toBe('assistant');
+  });
+
+  it('does not resurrect a deleted conversation when its pending response resolves', async () => {
+    let store = newConversation(emptyConversations());
+    const id = store.activeId!;
+    store = deleteConversation(store, id);
+    store = appendConversationMessage(store, id, { role: 'assistant', content: 'Late reply' });
+    expect(store.conversations).toHaveLength(0);
   });
 
   it('preserves original challenge history when migrating pre-conversation archive', () => {
