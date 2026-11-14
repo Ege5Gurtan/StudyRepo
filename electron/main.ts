@@ -31,6 +31,14 @@ function registerHandlers() {
     requireRepository(root);
     return askTutor(request);
   });
+  ipcMain.handle('conversations:get', (_event, root: unknown) => {
+    requireRepository(root);
+    return db.loadConversations(root);
+  });
+  ipcMain.handle('conversations:save', (_event, root: unknown, store: unknown) => {
+    requireRepository(root);
+    db.saveConversations(root, store);
+  });
   ipcMain.handle('learning:history:get', (_event, root: unknown) => {
     requireRepository(root);
     return db.loadLearningArchive(root);

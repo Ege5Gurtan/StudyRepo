@@ -4,8 +4,43 @@ import os from 'node:os';
 import path from 'node:path';
 import { Database } from '../electron/database';
 import { addChallenge, emptyArchive } from '../src/study/history';
+import { newConversation, changeConversationArchive, selectConversation, emptyConversations } from '../src/study/conversations';
 
 describe('local database', () => {
+  it('migrates legacy history and persists multiple independent conversations across restarts', () => {
+    const directory = mkdtempSync(path.join(os.tmpdir(), 'studyrepo-conversations-'));
+    const filename = path.join(directory, 'db.sqlite');
+    const session = { goal: 'Learn functions', topicIndex: 0, sourceContext: 'function a() {}',
+      topics: [{ id: 'functions', title: 'Functions', objective: 'Understand functions' }],
+      lesson: { introduction: 'Start', explanation: 'Learn', references: [],
+        challenge: { title: 'Function', description: 'Write a function', language: 'javascript', starterCode: 'function a() {}', criteria: ['Return'] } } };
+    try {
+      const db = new Database(filename);
+      db.addRepository({ name: 'project', path: '/project' });
+      const legacy = addChallenge(emptyArchive(), session);
+      db.saveLearningArchive('/project', legacy);
+      let store = db.loadConversations('/project');
+      expect(store.conversations).toHaveLength(1);
+      expect(store.conversations[0].archive.entries).toEqual(legacy.entries);
+      const original = store.activeId!;
+      store = newConversation(store);
+      const second = store.activeId!;
+      store = changeConversationArchive(store, archive => addChallenge(archive, { ...session, goal: 'Learn loops' }));
+      store = selectConversation(store, original);
+      db.saveConversations('/project', store);
+      db.close();
+      const reopened = new Database(filename);
+      const saved = reopened.loadConversations('/project');
+      expect(saved.activeId).toBe(original);
+      expect(saved.conversations.find(c => c.id === original)?.archive.entries).toHaveLength(1);
+      expect(saved.conversations.find(c => c.id === second)?.archive.entries[0].session.goal).toBe('Learn loops');
+      reopened.removeRepository('/project');
+      expect(reopened.loadConversations('/project')).toEqual(emptyConversations());
+      reopened.close();
+    } finally { rmSync(directory, { recursive: true, force: true }); }
+  });
+
+
   it('persists challenge drafts and evaluated solutions across database restarts and isolates repositories', () => {
     const directory = mkdtempSync(path.join(os.tmpdir(), 'studyrepo-history-db-'));
     const filename = path.join(directory, 'db.sqlite');

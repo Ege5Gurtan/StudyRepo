@@ -57,3 +57,10 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - Direct requests such as "Give me another set of challenges" should create structured Practice challenges through `generateLesson` rather than a text-only list. The explicit chat intent helper lives in `src/study/chat-intent.ts`; keep ordinary tutoring questions conversational.
 - Maintain both student and assistant turns in `TutorPanel` when resolving async responses. `src/study/chat-messages.ts` contains immutable operations; tests guard against lost user messages.
 - Per-repository challenge history persists across batches; retain source protections, output validation and storage limits. Do not claim unlimited storage or runtime compilation.
+
+## Conversation history and isolation
+
+- `src/study/conversations.ts` stores per-repository conversations as distinct `LearningArchive` objects. A conversation owns its chat messages, generated challenges, code drafts and evaluations; never reuse another conversation's archive after navigation.
+- `electron/database.ts` keeps the multi-conversation JSON store in `conversation_stores` with restricted `conversations:get/save` IPC; it automatically migrates the old `learning_archives` row to one conversation without deleting its original data.
+- Switching chats changes the active ID and invalidates pending lesson/evaluation results. Scope asynchronous chat callbacks to a stable conversation ID, and keep active edits and stored messages isolated.
+- **New chat** makes a separate empty conversation, rather than clearing the prior conversation. Renaming and deleting operate only on the selected conversation. Never delete repository source files.
