@@ -55,9 +55,13 @@ export default function App() {
 
   async function loadRepository(repo: Repository) {
     const epoch = ++learningEpoch.current;
+    const previousRepository = scan?.repository.path;
+    const previousArchive = archive;
+    const shouldFlush = archiveReady && !!previousRepository && previousRepository !== repo.path;
     setArchiveReady(false);
     try {
       setError('');
+      if (shouldFlush) await window.studyRepo.saveLearningArchive(previousRepository!, previousArchive);
       const [nextScan, nextIndex, saved] = await Promise.all([window.studyRepo.scanRepository(repo.path), window.studyRepo.getIndexSummary(repo.path), window.studyRepo.loadLearningArchive(repo.path)]);
       if (epoch !== learningEpoch.current) return;
       setLearningBusy(false); setArchive(saved); setArchiveReady(true); setAwaitingGoal(saved.entries.length === 0); setScan(nextScan); setIndexSummary(nextIndex); setJump(null); setTabs([]); setActive(''); setPage('Practice'); setLearningError('');
