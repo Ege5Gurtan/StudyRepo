@@ -15,9 +15,9 @@ export const initialPracticeCode = `TArray<FIntPoint> FindMissing(
 
 export function checkPractice(code: string): string[] {
   const issues: string[] = [];
-  if (!/for\\s*\\(\\s*(?:int|int32|auto)\\s+i\\s*=/.test(code) && !/\\b(?:int|int32)\\s+i\\s*=/.test(code)) issues.push("Loop variable 'i' is not declared (demo pattern check).");
-  if (!/Loaded\\.Contains\\s*\\(/.test(code)) issues.push('Check whether Loaded contains the required chunk.');
-  if (!/Missing\\.Add\\s*\\(/.test(code)) issues.push('Add missing chunks to the Missing array.');
+  if (!/for\s*\(\s*(?:int|int32|auto)\s+i\s*=/.test(code) && !/\b(?:int|int32)\s+i\s*=/.test(code)) issues.push("Loop variable 'i' is not declared (demo pattern check).");
+  if (!/Loaded\.Contains\s*\(/.test(code)) issues.push('Check whether Loaded contains the required chunk.');
+  if (!/Missing\.Add\s*\(/.test(code)) issues.push('Add missing chunks to the Missing array.');
   return issues;
 }
 
@@ -54,7 +54,7 @@ export function PracticeWorkspace({ code, onCodeChange, diagnostics, onDiagnosti
     </div>
     <div className="practice-tests">
       <div className="practice-tests-header"><h2>Compiler / Tests <span className="badge">DEMO ONLY</span></h2><div><button className="panel-toggle" aria-label="Toggle test output" onClick={() => setExpanded(value => !value)}>{expanded ? 'Hide' : 'Show'}</button> <button className="primary" onClick={() => { onDiagnostics(checkPractice(effectiveCode)); setRan(true); setExpanded(true); }}>▶ Run demo checks</button></div></div>
-      {expanded && <>{ran ? diagnostics.length ? <pre role="alert">{diagnostics.join('\\n')}</pre> : <p className="pass" role="status">Demo checks passed. Code has NOT been compiled.</p> : <p className="muted">Run the checks to see pattern-based feedback.</p>}<small>No real C++ compiler or Unreal Engine runner is connected.</small></>}
+      {expanded && <>{ran ? diagnostics.length ? <pre role="alert">{diagnostics.join('\n')}</pre> : <p className="pass" role="status">Demo checks passed. Code has NOT been compiled.</p> : <p className="muted">Run the checks to see pattern-based feedback.</p>}<small>No real C++ compiler or Unreal Engine runner is connected.</small></>}
     </div>
   </section>;
 }
