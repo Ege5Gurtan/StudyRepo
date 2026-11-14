@@ -244,3 +244,77 @@ input { accent-color: #8270e4; }
   .learning-workspace .learning-problem { max-height: 28%; }
   .learning-workspace .learning-evaluation { max-height: 28%; }
 }
+
+/* Compact challenge history (does not steal height from Monaco). */
+.learning-workspace .challenge-history {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--card);
+}
+.challenge-history-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+.challenge-history-heading strong { font-weight: 650; }
+.challenge-history-arrows { display: flex; gap: 6px; margin-left: auto; }
+.challenge-history-arrows button,
+.challenge-history-items button,
+.saved-learning-list button,
+.challenge-attempt button {
+  border: 1px solid var(--border);
+  background: var(--side);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 5px 9px;
+  font-size: 11px;
+}
+.challenge-history-arrows button:disabled,
+.challenge-history-items button:disabled { opacity: .45; }
+.challenge-history-items {
+  display: flex;
+  gap: 7px;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.challenge-history-items button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  gap: 7px;
+  max-width: 230px;
+}
+.challenge-history-items button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.challenge-history-items button small { color: var(--muted); white-space: nowrap; }
+.challenge-history-items button.challenge-history-active {
+  border-color: var(--accent);
+}
+.challenge-attempt-history { margin: 8px 0; font-size: 12px; }
+.challenge-attempt-history > summary { cursor: pointer; color: var(--accent); }
+.challenge-attempt { margin-top: 9px; padding: 9px; border: 1px solid var(--border); border-radius: 7px; }
+.challenge-attempt strong { display: inline-block; margin-right: 10px; }
+.challenge-attempt small { color: var(--muted); }
+.challenge-attempt pre {
+  background: var(--bg);
+  overflow: auto;
+  max-height: 160px;
+  padding: 8px;
+  white-space: pre;
+  font-size: 11px;
+}
+.saved-learning-list { margin-top: 18px; display: grid; gap: 7px; }
+.saved-learning-list h3 { font-size: 13px; margin: 0 0 6px; }
+.saved-learning-list button { width: 100%; display: flex; justify-content: space-between; text-align: left; padding: 9px; }

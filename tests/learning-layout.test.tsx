@@ -31,6 +31,10 @@ describe('adaptive practice layout', () => {
     const html = renderToStaticMarkup(
       <LearningWorkspace
         session={session}
+        challengeId="challenge-1"
+        entries={[{ id: 'challenge-1', session, code: 'function identity(x) { return x; }', attempts: [], status: 'active', createdAt: '2026-11-14T00:00:00Z' }]}
+        activeIndex={0}
+        attempts={[]}
         code="function identity(x) { return x; }"
         onCodeChange={() => {}}
         evaluation={null}
@@ -39,6 +43,9 @@ describe('adaptive practice layout', () => {
         onEvaluate={() => {}}
         onRestart={() => {}}
         onAdvance={() => {}}
+        onSkip={() => {}}
+        onNavigate={() => {}}
+        onRestoreAttempt={() => {}}
         onOpenSource={() => {}}
       />
     );
@@ -49,5 +56,8 @@ describe('adaptive practice layout', () => {
     expect(html).toContain('data-testid="monaco-editor"');
     expect(html).toContain('Evaluate my solution');
     expect(html).toContain('Evaluation criteria');
+    expect(html).toContain('Challenge history');
+    expect(html).toContain('Previous challenge');
+    expect(html).toContain('Similar challenge');
   });
 });

@@ -3,8 +3,34 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { Database } from '../electron/database';
+import { addChallenge, emptyArchive } from '../src/study/history';
 
 describe('local database', () => {
+  it('persists challenge drafts and evaluated solutions across database restarts and isolates repositories', () => {
+    const directory = mkdtempSync(path.join(os.tmpdir(), 'studyrepo-history-db-'));
+    const filename = path.join(directory, 'db.sqlite');
+    const session = { goal: 'Practice functions', topicIndex: 0, sourceContext: 'function example() {}',
+      topics: [{ id: 'functions', title: 'Functions', objective: 'Learn functions' }],
+      lesson: { introduction: 'Welcome', explanation: 'Function lesson', references: [],
+        challenge: { title: 'Example', description: 'Write a function', language: 'javascript',
+          starterCode: 'function example() {}', criteria: ['Returns a number'] } } };
+    try {
+      const db = new Database(filename);
+      db.addRepository({ path: '/one', name: 'one' });
+      db.addRepository({ path: '/two', name: 'two' });
+      const archive = addChallenge(emptyArchive(), session);
+      db.saveLearningArchive('/one', archive);
+      expect(db.loadLearningArchive('/two')).toEqual(emptyArchive());
+      db.close();
+      const reopened = new Database(filename);
+      expect(reopened.loadLearningArchive('/one')).toEqual(archive);
+      reopened.removeRepository('/one');
+      expect(reopened.loadLearningArchive('/one')).toEqual(emptyArchive());
+      expect(reopened.listRepositories()).toEqual([{ path: '/two', name: 'two' }]);
+      reopened.close();
+    } finally { rmSync(directory, { recursive: true, force: true }); }
+  });
+
   it('removes imported repository metadata without touching any source folder', () => {
     const directory = mkdtempSync(path.join(os.tmpdir(), 'studyrepo-remove-db-'));
     const filename = path.join(directory, 'db.sqlite');

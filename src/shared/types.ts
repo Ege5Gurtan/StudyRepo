@@ -104,6 +104,24 @@ export interface LearningEvaluateRequest {
   lesson: LearningLesson;
   code: string;
 }
+export interface ChallengeAttempt {
+  code: string;
+  evaluation: LearningEvaluation;
+  submittedAt: string;
+}
+export interface ChallengeHistoryEntry {
+  id: string;
+  session: LearningSession;
+  code: string;
+  attempts: ChallengeAttempt[];
+  status: 'active' | 'skipped';
+  createdAt: string;
+}
+export interface LearningArchive {
+  entries: ChallengeHistoryEntry[];
+  activeIndex: number;
+  messages: TutorMessage[];
+}
 export interface StudyRepoAPI {
   listRepositories(): Promise<Repository[]>;
   importRepository(): Promise<Repository | null>;
@@ -111,6 +129,8 @@ export interface StudyRepoAPI {
   askTutor(request: TutorRequest): Promise<string>;
   generateLesson(request: LearningGenerateRequest): Promise<LearningSession>;
   evaluateSolution(request: LearningEvaluateRequest): Promise<LearningEvaluation>;
+  loadLearningArchive(repository: string): Promise<LearningArchive>;
+  saveLearningArchive(repository: string, archive: LearningArchive): Promise<void>;
   scanRepository(path: string): Promise<ScanResult>;
   readFile(repository: string, path: string): Promise<string>;
   markStudied(repository: string, path: string): Promise<void>;

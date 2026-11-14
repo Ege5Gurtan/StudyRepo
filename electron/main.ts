@@ -31,6 +31,14 @@ function registerHandlers() {
     requireRepository(root);
     return askTutor(request);
   });
+  ipcMain.handle('learning:history:get', (_event, root: unknown) => {
+    requireRepository(root);
+    return db.loadLearningArchive(root);
+  });
+  ipcMain.handle('learning:history:save', (_event, root: unknown, archive: unknown) => {
+    requireRepository(root);
+    db.saveLearningArchive(root, archive);
+  });
   ipcMain.handle('learning:generate', async (_event, request: unknown) => {
     if (!request || typeof request !== 'object') throw new Error('Invalid learning request.');
     requireRepository((request as { repository?: unknown }).repository);
