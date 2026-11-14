@@ -8,6 +8,9 @@ const api: StudyRepoAPI = {
   readFile: (root, file) => ipcRenderer.invoke('files:read', root, file),
   markStudied: (root, file) => ipcRenderer.invoke('files:studied', root, file),
   getProgress: (root) => ipcRenderer.invoke('progress:get', root),
-  saveQuiz: (root, quizId, answers) => ipcRenderer.invoke('quiz:save', root, quizId, answers)
+  saveQuiz: (root, quizId, answers) => ipcRenderer.invoke('quiz:save', root, quizId, answers),
+  indexRepository: (root) => ipcRenderer.invoke('index:build', root),
+  getIndexSummary: (root) => ipcRenderer.invoke('index:summary', root),
+  searchSymbols: (root, query) => ipcRenderer.invoke('index:search', root, query)
 };
 contextBridge.exposeInMainWorld('studyRepo', api);

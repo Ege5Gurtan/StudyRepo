@@ -26,6 +26,26 @@ export interface Progress {
   studiedFiles: { path: string; studiedAt: string }[];
   quizResults: QuizResult[];
 }
+export type SymbolKind = 'class' | 'struct' | 'interface' | 'type' | 'enum' | 'function' | 'method' | 'import' | 'include';
+export interface CodeSymbol {
+  file: string;
+  name: string;
+  kind: SymbolKind;
+  line: number;
+}
+export interface RepositoryIndex {
+  repository: string;
+  indexedFiles: { file: string; hash: string }[];
+  symbols: CodeSymbol[];
+  skipped: number;
+  indexedAt: string;
+}
+export interface IndexSummary {
+  indexedFiles: number;
+  symbols: number;
+  skipped: number;
+  indexedAt: string | null;
+}
 export interface StudyRepoAPI {
   listRepositories(): Promise<Repository[]>;
   importRepository(): Promise<Repository | null>;
@@ -34,4 +54,7 @@ export interface StudyRepoAPI {
   markStudied(repository: string, path: string): Promise<void>;
   getProgress(repository: string): Promise<Progress>;
   saveQuiz(repository: string, quizId: string, answers: number[]): Promise<QuizResult>;
+  indexRepository(repository: string): Promise<IndexSummary>;
+  getIndexSummary(repository: string): Promise<IndexSummary>;
+  searchSymbols(repository: string, query: string): Promise<CodeSymbol[]>;
 }

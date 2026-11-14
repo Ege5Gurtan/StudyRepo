@@ -2,6 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import path from 'node:path';
 import { Database } from './database';
 import { readRepositoryFile, scanRepository } from './repository';
+import { buildRepositoryIndex } from './intelligence';
 import { sampleQuiz, scoreQuiz } from '../src/study/quiz';
 
 let db: Database;
@@ -32,6 +33,20 @@ function registerHandlers() {
     requireRepository(root);
     await readRepositoryFile(root, file);
     db.markStudied(root, file);
+  });
+  ipcMain.handle('index:build', async (_event, root: unknown) => {
+    requireRepository(root);
+    const index = await buildRepositoryIndex(root);
+    return db.saveIndex(index);
+  });
+  ipcMain.handle('index:summary', (_event, root: unknown) => {
+    requireRepository(root);
+    return db.getIndexSummary(root);
+  });
+  ipcMain.handle('index:search', (_event, root: unknown, query: unknown) => {
+    requireRepository(root);
+    if (typeof query !== 'string' || query.length > 120) throw new Error('Invalid symbol query.');
+    return db.searchSymbols(root, query);
   });
   ipcMain.handle('progress:get', (_event, root: unknown) => {
     requireRepository(root);
