@@ -22,7 +22,7 @@ export function addChallengeWithTutorExplanation(archive: LearningArchive, sessi
     session.lesson.explanation,
     'Challenge: ' + session.lesson.challenge.description
   ].filter(Boolean).join('\n\n').slice(0, 16000);
-  return { ...updated, messages: [...updated.messages, { role: 'assistant', content, challengeId }].slice(-40) };
+  return { ...updated, messages: [...updated.messages, { role: 'assistant' as const, content, challengeId }].slice(-40) };
 }
 
 export function selectChallenge(archive: LearningArchive, index: number): LearningArchive {
