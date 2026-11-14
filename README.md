@@ -44,6 +44,12 @@ npm run dev
 
 Restart the Electron app after changing environment variables. If the key is missing, the tutor shows a configuration error when you send a message. Requests are sent directly from the main process to OpenAI; responses are not stored remotely by this integration (`store: false`) or saved as chat history locally. Current code snippets and recent chat messages **leave your computer** when you ask the tutor a question. API usage is billed separately by OpenAI.
 
+## Recent learning conversations
+
+Each imported repository has a **Recent Conversations** sidebar and **New chat** action. A conversation has its own AI Tutor messages and generated challenge history, including code drafts, attempts and AI evaluations. Switching chats restores the conversation's corresponding Monaco challenge and transcript; other chats stay unchanged. Chats can be renamed or deleted after confirmation.
+
+All conversations are saved locally in SQLite and restored when you reopen the repository or restart StudyRepo. Existing users' single archived learning history is automatically migrated into one conversation on first access, without deleting the old history. Removing an imported repository also deletes its local conversations, but never touches source files.
+
 ## Saved challenge history
 
 StudyRepo keeps an independent local history for each imported repository. Practice shows a compact challenge timeline with **Previous** and **Next** navigation. Revisiting an earlier exercise restores its latest editable draft and its AI evaluations. Expand **Submitted solutions** to view earlier submitted code snapshots and feedback, or restore a submitted version into the editor.
