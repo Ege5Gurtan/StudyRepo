@@ -57,7 +57,7 @@ export default function App() {
     const epoch = ++learningEpoch.current;
     const previousRepository = scan?.repository.path;
     const previousArchive = archive;
-    const shouldFlush = archiveReady && !!previousRepository && previousRepository !== repo.path;
+    const shouldFlush = archiveReady && !!previousRepository;
     setArchiveReady(false);
     try {
       setError('');
