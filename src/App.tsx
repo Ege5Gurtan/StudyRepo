@@ -45,6 +45,7 @@ export default function App() {
   const [error, setError] = useState('');
   const [theme, setTheme] = useState<'dark' | 'light'>(() => localStorage.getItem('theme') === 'light' ? 'light' : 'dark');
   const [tutorVisible, setTutorVisible] = useState(true);
+  const [focusChatChallengeId, setFocusChatChallengeId] = useState<string | null>(null);
   const [conversationStore, setConversationStore] = useState<ConversationStore>(emptyConversations);
   const activeConversation = conversationStore.conversations.find(item => item.id === conversationStore.activeId);
   conversationRef.current = conversationStore.activeId;
@@ -219,11 +220,13 @@ export default function App() {
       : tutorLearningCode;
     const requestFile = requestContext === 'Explorer' ? current?.path : undefined;
     const existingLesson = !!previousEntry && !awaitingGoal;
-    setConversationStore(old => appendConversationMessage(old, conversationId, { role: 'user', content: q }));
+    setConversationStore(old => appendConversationMessage(old, conversationId, { role: 'user', content: q, challengeId: previousEntry?.id }));
+    let generatedChallenge = false;
     try {
       let answer: string;
       if (!existingLesson && requestContext === 'Practice') {
         const lesson = await window.studyRepo.generateLesson({ repository, goal: q, mode: 'start' });
+        generatedChallenge = true;
         setConversationStore(old => nameConversationById(
           updateConversationById(old, conversationId, a => addChallenge(a, lesson)), conversationId, q));
         if (conversationRef.current === conversationId) setAwaitingGoal(false);
@@ -247,6 +250,7 @@ export default function App() {
             previousChallenge: currentSession?.lesson.challenge,
             focus: action.focus
           });
+          generatedChallenge = true;
           setConversationStore(old => updateConversationById(old, conversationId, a => addChallenge(a, lesson)));
           if (conversationRef.current === conversationId) setAwaitingGoal(false);
           answer = action.scope === 'set'
@@ -259,7 +263,13 @@ export default function App() {
           code: requestCode.slice(0, 12000), question: q, history: previousMessages.slice(-10)
         });
       }
-      setConversationStore(old => appendConversationMessage(old, conversationId, { role: 'assistant', content: answer }));
+      setConversationStore(old => updateConversationById(old, conversationId, a => ({
+        ...a,
+        messages: [...a.messages, {
+          role: 'assistant' as const, content: answer,
+          challengeId: generatedChallenge ? a.entries.at(-1)?.id : previousEntry?.id
+        }].slice(-40)
+      })));
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       setConversationStore(old => appendConversationMessage(old, conversationId, { role: 'assistant', content: 'Unable to complete the request: ' + message }));
@@ -273,6 +283,7 @@ export default function App() {
     setConversationStore(old => newConversation(old));
     setAwaitingGoal(true);
     setLearningError('');
+    setFocusChatChallengeId(null);
     setPage('Practice');
   }
   function openChat(id: string) {
@@ -306,6 +317,18 @@ export default function App() {
     setArchive(old => selectChallenge(old, index));
     setAwaitingGoal(false);
     setLearningError('');
+  }
+  function showChallengeInTutor() {
+    if (!activeEntry) return;
+    setTutorVisible(true);
+    setFocusChatChallengeId(activeEntry.id);
+  }
+  function showChallengeFromTutor(index: number) {
+    if (index < 0 || index >= archive.entries.length) return;
+    navigateHistory(index);
+    setFocusChatChallengeId(null);
+    setPage('Practice');
+    document.querySelector('.practice-editor')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
   const tutorLearningCode = learning
     ? ('Current topic: ' + learning.topics[learning.topicIndex]?.title + '\\nChallenge: ' + learning.lesson.challenge.description +
@@ -345,7 +368,7 @@ export default function App() {
         <div className="card modules"><div><h2>Browse source code</h2><p className="muted">Find source files and symbols in the imported repository. {indexSummary?.indexedAt ? `${indexSummary.symbols} symbols indexed.` : 'Source index not built yet.'}</p></div><button onClick={() => setPage('Explorer')}>Open Explorer →</button></div>
       </section> :
       scan && page === 'Explorer' ? <div className="workspace-with-tutor"><div className="explorer"><div className="file-panel"><div className="panel-title">EXPLORER <span>{scan.fileCount} files</span></div><div className="repo-heading">▾ {scan.repository.name}</div><FileTree nodes={scan.tree} open={file => { void openFile(file); }}/><SymbolExplorer repository={scan.repository.path} summary={indexSummary} onIndexed={setIndexSummary} onOpen={(file, line) => { void openFile(file, line); }}/></div><div className="editor-area"><div className="tabs">{tabs.map(tab => <div className={`tab ${active === tab.path ? 'active-tab' : ''}`} key={tab.path}><button title={tab.path} onClick={() => { setActive(tab.path); setSelection({ startLine: 1, endLine: 1, code: '' }); }}>{tab.path.split(/[\\\\/]/).pop()}</button><button aria-label={`Close ${tab.path}`} onClick={() => { const rest = tabs.filter(t => t.path !== tab.path); setTabs(rest); if (active === tab.path) setActive(rest.at(-1)?.path ?? ''); }}>×</button></div>)}</div>{current ? <Editor path={current.path} value={current.content} theme={theme === 'dark' ? 'vs-dark' : 'light'} options={{ readOnly: true, minimap: { enabled: false }, fontSize: 13, scrollBeyondLastLine: false, automaticLayout: true }} onMount={editor => { explorerEditor.current = editor; if (jump && jump.file === active) { editor.revealLineInCenter(jump.line); editor.setPosition({ lineNumber: jump.line, column: 1 }); } editor.onDidChangeCursorSelection(event => { const range = event.selection; setSelection({ startLine: range.startLineNumber, endLine: range.endLineNumber, code: editor.getModel()?.getValueInRange(range) ?? '' }); }); }} /> : <div className="editor-empty">Select a file to explore</div>}</div></div></div> :
-      scan && page === 'Practice' ? <div className="workspace-with-tutor"><LearningWorkspace session={learning} challengeId={activeEntry?.id ?? ''} code={practiceCode} onCodeChange={value => { const id = activeConversation?.id; if (id) setConversationStore(old => updateConversationById(old, id, a => changeChallengeCode(a, value))); }} evaluation={evaluationCode === practiceCode ? evaluation : null} attempts={activeEntry?.attempts ?? []} entries={archive.entries} activeIndex={archive.activeIndex} busy={learningBusy || !archiveReady} error={learningError} onEvaluate={() => { void evaluateCode(); }} onRestart={createChat} onAdvance={mode => { void advanceLearning(mode).catch(() => {}); }} onSkip={() => { void advanceLearning('next', true).catch(() => {}); }} onNavigate={navigateHistory} onRestoreAttempt={index => { const attempt = activeEntry?.attempts[index]; if (attempt && activeConversation) setConversationStore(old => updateConversationById(old, activeConversation.id, a => changeChallengeCode(a, attempt.code))); }} onOpenSource={(file, line) => { void openFile(file, line); }}/></div> :
+      scan && page === 'Practice' ? <div className="workspace-with-tutor"><LearningWorkspace session={learning} challengeId={activeEntry?.id ?? ''} code={practiceCode} onCodeChange={value => { const id = activeConversation?.id; if (id) setConversationStore(old => updateConversationById(old, id, a => changeChallengeCode(a, value))); }} evaluation={evaluationCode === practiceCode ? evaluation : null} attempts={activeEntry?.attempts ?? []} entries={archive.entries} activeIndex={archive.activeIndex} busy={learningBusy || !archiveReady} error={learningError} onEvaluate={() => { void evaluateCode(); }} onRestart={createChat} onAdvance={mode => { void advanceLearning(mode).catch(() => {}); }} onSkip={() => { void advanceLearning('next', true).catch(() => {}); }} onNavigate={navigateHistory} onRestoreAttempt={index => { const attempt = activeEntry?.attempts[index]; if (attempt && activeConversation) setConversationStore(old => updateConversationById(old, activeConversation.id, a => changeChallengeCode(a, attempt.code))); }} onShowTutor={showChallengeInTutor}/></div> :
       null}
       {scan && <TutorPanel
         key={scan.repository.path + ':tutor:' + (conversationStore.activeId ?? 'none')}
@@ -358,6 +381,11 @@ export default function App() {
         onStartLearning={page === 'Practice' ? startLearning : undefined}
         onGenerateChallenges={page === 'Practice' ? generateChallengesFromChat : undefined}
         messages={archive.messages}
+        activeChallenge={page === 'Practice' ? activeEntry : undefined}
+        challengeEntries={archive.entries}
+        focusChallengeId={focusChatChallengeId}
+        onOpenChallenge={showChallengeFromTutor}
+        onOpenSource={(file, line) => { void openFile(file, line); }}
         pending={pendingConversations.includes(scan.repository.path + ':' + (conversationStore.activeId ?? ''))}
         onSendMessage={question => { void sendConversationMessage(question); }}
         onMessagesChange={messages => {
