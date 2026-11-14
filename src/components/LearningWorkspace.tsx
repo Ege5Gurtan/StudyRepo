@@ -18,11 +18,10 @@ interface Props {
   onSkip: () => void;
   onNavigate: (index: number) => void;
   onRestoreAttempt: (index: number) => void;
-  onOpenSource: (file: string, line: number) => void;
   onShowTutor: () => void;
 }
 
-export function LearningWorkspace({ session, challengeId, entries, activeIndex, attempts, code, onCodeChange, evaluation, busy, error, onEvaluate, onRestart, onAdvance, onSkip, onNavigate, onRestoreAttempt, onOpenSource, onShowTutor }: Props) {
+export function LearningWorkspace({ session, challengeId, entries, activeIndex, attempts, code, onCodeChange, evaluation, busy, error, onEvaluate, onRestart, onAdvance, onSkip, onNavigate, onRestoreAttempt, onShowTutor }: Props) {
   if (!session) return <section className="practice-workspace learning-welcome" aria-label="Adaptive learning workspace">
     <div className="learning-hero">
       <p className="eyebrow">PERSONALIZED LEARNING</p>
