@@ -9,11 +9,12 @@ interface Props {
   busy: boolean;
   error: string;
   onEvaluate: () => void;
+  onRestart: () => void;
   onAdvance: (mode: 'next' | 'similar') => void;
   onOpenSource: (file: string, line: number) => void;
 }
 
-export function LearningWorkspace({ session, code, onCodeChange, evaluation, busy, error, onEvaluate, onAdvance, onOpenSource }: Props) {
+export function LearningWorkspace({ session, code, onCodeChange, evaluation, busy, error, onEvaluate, onRestart, onAdvance, onOpenSource }: Props) {
   if (!session) return <section className="practice-workspace learning-welcome" aria-label="Adaptive learning workspace">
     <div className="learning-hero">
       <p className="eyebrow">PERSONALIZED LEARNING</p>
@@ -27,7 +28,7 @@ export function LearningWorkspace({ session, code, onCodeChange, evaluation, bus
   const finalTopic = session.topicIndex >= session.topics.length - 1;
   return <section className="practice-workspace learning-workspace" aria-label="Adaptive learning workspace">
     <div className="practice-problem learning-problem">
-      <div className="learning-topline"><span className="eyebrow">ADAPTIVE LEARNING · TOPIC {session.topicIndex + 1} OF {session.topics.length}</span><span className="muted">{challenge.language}</span></div>
+      <div className="learning-topline"><span className="eyebrow">ADAPTIVE LEARNING · TOPIC {session.topicIndex + 1} OF {session.topics.length}</span><button className="learning-restart" onClick={onRestart}>New learning goal</button></div>
       <h2>{topic?.title ?? challenge.title}</h2>
       <p className="muted">{topic?.objective}</p>
       <div className="learning-plan">{session.topics.map((item, index) => <span className={index === session.topicIndex ? 'learning-active-topic' : ''} key={item.id}>{index + 1}. {item.title}</span>)}</div>
@@ -54,7 +55,7 @@ export function LearningWorkspace({ session, code, onCodeChange, evaluation, bus
         <small>AI review is not compilation or executable verification.</small>
         {evaluation.status === 'passed' && <div className="learning-next-actions">
           <button disabled={busy} onClick={() => onAdvance('similar')}>↻ Similar challenge</button>
-          <button disabled={busy} className="primary" onClick={() => onAdvance('next')}>{finalTopic ? 'Continue studying' : 'Next topic →'}</button>
+          <button disabled={busy} className="primary" onClick={() => onAdvance('next')}>{finalTopic ? 'Another challenge →' : 'Next topic →'}</button>
         </div>}
       </div> : <p className="muted">Write your solution, then ask AI to review it. You can ask questions in the Tutor chat at any time.</p>}
     </div>
