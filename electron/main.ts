@@ -3,6 +3,7 @@ import path from 'node:path';
 import { Database } from './database';
 import { readRepositoryFile, scanRepository } from './repository';
 import { buildRepositoryIndex } from './intelligence';
+import { askTutor } from './tutor';
 import { sampleQuiz, scoreQuiz } from '../src/study/quiz';
 
 let db: Database;
@@ -18,6 +19,16 @@ function registerHandlers() {
     const result = await scanRepository(selection.filePaths[0]);
     db.addRepository(result.repository);
     return result.repository;
+  });
+  ipcMain.handle('repositories:remove', (_event, root: unknown) => {
+    requireRepository(root);
+    db.removeRepository(root);
+  });
+  ipcMain.handle('tutor:ask', async (_event, request: unknown) => {
+    if (!request || typeof request !== 'object') throw new Error('Invalid tutor request.');
+    const root = (request as { repository?: unknown }).repository;
+    requireRepository(root);
+    return askTutor(request);
   });
   ipcMain.handle('repositories:scan', async (_event, root: unknown) => {
     requireRepository(root);
