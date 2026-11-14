@@ -7,13 +7,21 @@ interface Props {
   hidden?: boolean;
   learningStarted?: boolean;
   onStartLearning?: (goal: string) => Promise<string>;
+  messages?: TutorMessage[];
+  onMessagesChange?: (messages: TutorMessage[]) => void;
   code: string;
   sourceFile?: string;
   diagnostics?: string[];
 }
 
-export function TutorPanel({ repository, context, code, sourceFile, diagnostics = [], hidden = false, learningStarted = true, onStartLearning }: Props) {
-  const [messages, setMessages] = useState<TutorMessage[]>([]);
+export function TutorPanel({ repository, context, code, sourceFile, diagnostics = [], hidden = false, learningStarted = true, onStartLearning, messages: controlledMessages, onMessagesChange }: Props) {
+  const [localMessages, setLocalMessages] = useState<TutorMessage[]>([]);
+  const messages = controlledMessages ?? localMessages;
+  const setMessages = (update: TutorMessage[] | ((old: TutorMessage[]) => TutorMessage[])) => {
+    const next = typeof update === 'function' ? update(messages) : update;
+    if (onMessagesChange) onMessagesChange(next);
+    else setLocalMessages(next);
+  };
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
