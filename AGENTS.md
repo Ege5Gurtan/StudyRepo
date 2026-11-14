@@ -36,3 +36,10 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - `src/components/TutorPanel.tsx` shows genuine responses and error states; never claim C++ pattern checks are compiler results. AI context is current code plus recent conversation, not the whole repository.
 - `repositories:remove` removes only application SQLite records in one transaction after the user confirms; it never deletes repository files. Keep existing records of other repositories intact.
 - Preserve the pre-existing database tables for backward compatibility even though the Progress and Learn screens are removed.
+
+## Adaptive learning v1
+
+- `electron/learning.ts` owns bounded repository snippet selection and structured Responses API calls for lessons and code reviews. Use `readRepositoryFile` to enforce path boundaries. Only known source extensions qualify; exclude sensitive filenames and directories.
+- The Electron main process validates imported repository roots for `learning:generate` and `learning:evaluate`. Keep model API keys server-side and `store: false`.
+- `LearningWorkspace.tsx` renders the planned topics, verified source links, Monaco scratchpad, and AI evaluation. The chat in `TutorPanel.tsx` starts a learning session from the student's first prompt and remains available during a challenge.
+- Session state is currently in React memory, not persisted. Never treat AI review as real compilation. Keep tests for retrieval, references, input bounds and structured API results in `tests/learning.test.ts`.
