@@ -44,13 +44,19 @@ npm run dev
 
 Restart the Electron app after changing environment variables. If the key is missing, the tutor shows a configuration error when you send a message. Requests are sent directly from the main process to OpenAI; responses are not stored remotely by this integration (`store: false`) or saved as chat history locally. Current code snippets and recent chat messages **leave your computer** when you ask the tutor a question. API usage is billed separately by OpenAI.
 
+## Saved challenge history
+
+StudyRepo keeps an independent local history for each imported repository. Practice shows a compact challenge timeline with **Previous** and **Next** navigation. Revisiting an earlier exercise restores its latest editable draft and its AI evaluations. Expand **Submitted solutions** to view earlier submitted code snapshots and feedback, or restore a submitted version into the editor.
+
+A student can **Skip to next topic** without passing the current challenge. Completed, skipped, and draft challenges are marked in the timeline. **New learning goal** begins another learning sequence while retaining past challenges; previous challenges remain accessible. Session data (including Tutor conversation snippets) is saved in Electron's local SQLite database, never written into the imported repository. History is limited to 100 challenges per repository in this initial version.
+
 ## Adaptive AI learning sessions (experimental)
 
 Import a repository and open **Practice**. Write your learning goal in the AI Tutor chat, such as "I want to learn JavaScript functions from this project. I am a beginner." StudyRepo selects a few relevant source snippets (up to three files), asks the configured OpenAI model to propose a small topic sequence, and creates a standalone challenge based on repository code. The explanation includes clickable references to verified source lines.
 
 Write code in the editable scratchpad and select **Evaluate my solution** for an AI-only review (no compilation or runtime). After an AI review passes, choose a similar challenge or the next topic. The Tutor remains available for questions throughout the exercise.
 
-**Limitations:** Lessons are generated dynamically and can be inaccurate. The repository retrieval is heuristic, not a complete semantic understanding of the codebase. This first version retains the learning session only while the app is open; it does not yet persist exercises or conversations. Imported repository files remain read-only. Learning requests transmit bounded snippets to OpenAI and may incur API charges. Source candidates are restricted to recognized code extensions and exclude common secret and credentials paths; review repository contents before using cloud AI with sensitive projects.
+**Limitations:** Lessons are generated dynamically and can be inaccurate. The repository retrieval is heuristic, not a complete semantic understanding of the codebase. Learning goals, challenges, drafts, AI reviews, and recent tutor conversation are now saved locally across app restarts. Imported repository files remain read-only. Learning requests transmit bounded snippets to OpenAI and may incur API charges. Source candidates are restricted to recognized code extensions and exclude common secret and credentials paths; review repository contents before using cloud AI with sensitive projects.
 
 ## Repository intelligence v1
 
