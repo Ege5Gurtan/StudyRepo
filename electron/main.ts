@@ -4,6 +4,7 @@ import { Database } from './database';
 import { readRepositoryFile, scanRepository } from './repository';
 import { buildRepositoryIndex } from './intelligence';
 import { askTutor } from './tutor';
+import { generateLesson, evaluateSolution } from './learning';
 import { sampleQuiz, scoreQuiz } from '../src/study/quiz';
 
 let db: Database;
@@ -29,6 +30,16 @@ function registerHandlers() {
     const root = (request as { repository?: unknown }).repository;
     requireRepository(root);
     return askTutor(request);
+  });
+  ipcMain.handle('learning:generate', async (_event, request: unknown) => {
+    if (!request || typeof request !== 'object') throw new Error('Invalid learning request.');
+    requireRepository((request as { repository?: unknown }).repository);
+    return generateLesson(request);
+  });
+  ipcMain.handle('learning:evaluate', async (_event, request: unknown) => {
+    if (!request || typeof request !== 'object') throw new Error('Invalid evaluation request.');
+    requireRepository((request as { repository?: unknown }).repository);
+    return evaluateSolution(request);
   });
   ipcMain.handle('repositories:scan', async (_event, root: unknown) => {
     requireRepository(root);
