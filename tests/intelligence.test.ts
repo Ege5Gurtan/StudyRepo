@@ -52,9 +52,12 @@ describe('repository intelligence', () => {
     expect(result.symbols).toEqual([{ file: path.join('src', 'main.ts'), name: 'Game', kind: 'class', line: 1 }]);
     expect(result.indexedFiles[0].hash).toMatch(/^[a-f0-9]{64}$/);
   });
-  it('rejects more than 1500 supported source files instead of scanning unboundedly', async () => {
-    const { readdir } = await import('node:fs/promises');
-    expect((await readdir(path.join(root, 'src'))).length).toBe(1);
-    // Guard covered by production limit; avoid creating thousands of files in the unit suite.
+  it('counts binary and oversized source files as skipped', async () => {
+    await writeFile(path.join(root, 'src', 'binary.ts'), Buffer.from([0, 1, 2]));
+    await writeFile(path.join(root, 'src', 'large.ts'), 'x'.repeat(256 * 1024 + 1));
+    const index = await buildRepositoryIndex(root);
+    expect(index.skipped).toBe(2);
+    expect(index.indexedFiles).toHaveLength(1);
+    expect(index.symbols.map(item => item.name)).toEqual(['Game']);
   });
 });
