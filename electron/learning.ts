@@ -39,7 +39,6 @@ export async function retrieveLearningContext(root: string, goal: string): Promi
   const results: Array<ContextFile & { score: number }> = [];
   // Read a bounded set of plausible files, never scan arbitrary private content.
   for (const entry of ranked.slice(0, 40)) {
-    if (results.length >= 3) break;
     try {
       const text = await readRepositoryFile(root, entry.file);
       if (text.length > 64000) continue;
@@ -48,7 +47,7 @@ export async function retrieveLearningContext(root: string, goal: string): Promi
       results.push({ file: entry.file, code: text.slice(0, 2600), totalLines: text.split(/\r?\n/).length, score: contentScore });
     } catch { /* unreadable and binary files are excluded */ }
   }
-  return results.sort((a, b) => b.score - a.score).map(({ file, code, totalLines }) => ({ file, code, totalLines }));
+  return results.sort((a, b) => b.score - a.score || a.file.localeCompare(b.file)).slice(0, 3).map(({ file, code, totalLines }) => ({ file, code, totalLines }));
 }
 
 export function validateGenerateRequest(value: unknown): LearningGenerateRequest {
