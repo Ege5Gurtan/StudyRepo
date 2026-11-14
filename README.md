@@ -17,7 +17,7 @@ StudyRepo is envisioned as a companion to your IDE, not a replacement for it. It
 - Import and reopen local repositories, browse a read-only source tree, and inspect symbols.
 - **Remove a repository from StudyRepo** with the × control beside its name. This removes the application's local metadata, study records, and symbol index; **it never deletes files from disk**.
 - **Practice-first UI:** Overview, Explorer, Practice, Settings. Selecting a repository opens Practice directly.
-- Practice includes a Monaco-based sample C++ exercise and clearly labeled pattern checks (not an actual compiler).
+- Practice supports repository-grounded adaptive lessons, standalone AI-generated coding challenges, and AI-only solution review (no actual compiler).
 - **Real AI Tutor:** The right-hand chat panel in Practice and Explorer sends the current code, recent conversation, and optional diagnostics to the OpenAI Responses API.
 - Model configurable by environment variable. No API key is exposed to the browser renderer, committed to source, or stored in SQLite.
 - Dark/light themes; source indexing remains available in Explorer.
@@ -43,6 +43,14 @@ npm run dev
 ```
 
 Restart the Electron app after changing environment variables. If the key is missing, the tutor shows a configuration error when you send a message. Requests are sent directly from the main process to OpenAI; responses are not stored remotely by this integration (`store: false`) or saved as chat history locally. Current code snippets and recent chat messages **leave your computer** when you ask the tutor a question. API usage is billed separately by OpenAI.
+
+## Adaptive AI learning sessions (experimental)
+
+Import a repository and open **Practice**. Write your learning goal in the AI Tutor chat, such as "I want to learn JavaScript functions from this project. I am a beginner." StudyRepo selects a few relevant source snippets (up to three files), asks the configured OpenAI model to propose a small topic sequence, and creates a standalone challenge based on repository code. The explanation includes clickable references to verified source lines.
+
+Write code in the editable scratchpad and select **Evaluate my solution** for an AI-only review (no compilation or runtime). After an AI review passes, choose a similar challenge or the next topic. The Tutor remains available for questions throughout the exercise.
+
+**Limitations:** Lessons are generated dynamically and can be inaccurate. The repository retrieval is heuristic, not a complete semantic understanding of the codebase. This first version retains the learning session only while the app is open; it does not yet persist exercises or conversations. Imported repository files remain read-only. Learning requests transmit bounded snippets to OpenAI and may incur API charges. Source candidates are restricted to recognized code extensions and exclude common secret and credentials paths; review repository contents before using cloud AI with sensitive projects.
 
 ## Repository intelligence v1
 
@@ -114,7 +122,7 @@ This produces local application assets in `dist/` and `dist-electron/`; it does 
 - Local repositories only; no GitHub integration or account is required.
 - Repository analysis is read-only and ignores common generated directories and symbolic links. Files must be UTF-8 text and no larger than 2 MB. Unreadable files and directories are reported or skipped.
 - Language detection is based on file extensions. File progress means a file was opened, not that its contents were mastered; deleted files can remain in history.
-- The Practice exercise is a generic sample, not generated from the repository. Checks are text-pattern checks only; no code execution engine or C++ compiler is included. AI Tutor is available with your own API key.
+- AI lessons and reviews can be inaccurate and are not a substitute for compilation or tests. No code execution engine or C++ compiler is included.
 - Repository intelligence v1 indexes TypeScript/JavaScript with the TypeScript syntax parser and supports **limited, heuristic C++** declarations and `#include` statements. It does not yet resolve full dependency graphs, references, overloads, macros, or semantic call relationships.
 - Indexing is manual (Explorer → Analyze source / Reindex source). Index entries are snapshots; reindex after edits. It reads up to 1,500 supported source files (maximum 256 KiB each, 20,000 extracted symbols). Files skipped for size, encoding, or accessibility are counted. Repository files are never modified.
 - SQLite data is stored in Electron's user-data directory, outside imported repositories. Removing an imported repository clears its local records, without touching source files. There is no data export, migration UI, or installer.
