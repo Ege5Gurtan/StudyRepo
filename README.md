@@ -2,48 +2,27 @@
 
 **Understand the code you work with.**
 
-StudyRepo is an open-source, desktop-first learning application designed to help developers explore, understand, and become confident working in unfamiliar codebases — including their own.
-
-AI coding tools can generate large amounts of code quickly. But writing code faster doesn't automatically mean understanding it better. StudyRepo aims to bridge that gap by turning a software repository into an interactive learning environment.
+StudyRepo is a local-first desktop application for learning by studying your own code. Explore a repository, build familiarity with its files, and practice code-reading fundamentals without an AI account.
 
 > **Mission:** Make it easier to understand *why* a codebase works, not just *what* the code says.
 
-## The problem
-
-Developers increasingly work with code that they did not write themselves: open-source projects, inherited systems, team contributions, and AI-generated implementations.
-
-Common challenges include:
-
-- Finding a good starting point in a large repository.
-- Understanding how files, modules, classes, and functions connect.
-- Learning unfamiliar programming languages and frameworks in context.
-- Recognizing important concepts without getting overwhelmed by implementation details.
-- Checking whether you genuinely understand a piece of code before changing it.
-
-Traditional editors are excellent for writing code. StudyRepo focuses on **learning the code**.
-
 ## The idea
 
-Open a repository in StudyRepo, select an area you want to understand, and learn through guided explanations, code exploration, and hands-on exercises.
+Developers often work with code they did not write themselves, including open-source projects, inherited systems, team contributions, and AI-generated implementations. StudyRepo aims to help them find a starting point, understand how a codebase fits together, and check their understanding before making changes.
 
-StudyRepo is envisioned as a companion to your IDE — not a replacement for it.
+StudyRepo is envisioned as a companion to your IDE, not a replacement for it. Its longer-term direction includes guided explanations, code exploration, and hands-on exercises grounded in the repository being studied.
 
-### Example learning session
+## Features
 
-Imagine opening a C++ game project that contains a `WorldManager.cpp` file.
-
-1. **Open a repository.** Browse its files and folders.
-2. **Choose a starting point.** Select `WorldManager.cpp` or ask for a beginner-friendly entry point.
-3. **Understand the code.** StudyRepo explains the file's purpose, important functions, unfamiliar syntax, and relationships to other files.
-4. **Learn the concepts.** Explore relevant topics such as classes, pointers, arrays, or framework-specific types.
-5. **Practice.** Complete small coding challenges inspired by the actual code.
-6. **Check your understanding.** Answer questions, review mistakes, and return to concepts that need more practice.
-
-The goal is to move from *“I can run this project”* to *“I understand how this project works.”*
+- Import and reopen local folders, browse a collapsible tree, and view UTF-8 source in a read-only Monaco editor with tabs.
+- See extension-based language counts, file counts, recently opened files, and file-based learning progress.
+- Request a clearly labeled mock explanation for selected lines; no code is sent to an AI service.
+- Complete a sample quiz and keep quiz attempts and studied files in a local SQLite database.
+- Use a dark or light theme and resize the explorer panel.
 
 ## Planned capabilities
 
-The following describe the **product vision**, not features already implemented.
+The following describe the product vision, not features already implemented.
 
 | Area | What StudyRepo aims to offer |
 | --- | --- |
@@ -57,16 +36,6 @@ The following describe the **product vision**, not features already implemented.
 | Quizzes and review | Test comprehension and revisit difficult concepts. |
 | Learning progress | Track which parts of a repository and which concepts you have studied. |
 
-### Interface direction
-
-StudyRepo is planned around three complementary views:
-
-- **Repository navigation:** a sidebar to find files, folders, and learning topics.
-- **Code workspace:** a central area for reading source code and exploring highlighted sections.
-- **Learning assistant:** a contextual panel for explanations, questions, and exercises.
-
-A Monaco-based code editor is one possible foundation for the code workspace. The final implementation details are still being determined.
-
 ## Design principles
 
 1. **Codebase-first learning.** Teach concepts using real code from the project being studied.
@@ -76,49 +45,61 @@ A Monaco-based code editor is one possible foundation for the code workspace. Th
 5. **Desktop-first experience.** Prioritize a comfortable workspace for extended code reading and study.
 6. **Open source.** Build in public and make it possible for others to contribute.
 
-## Project status
+## Technology
 
-**Early-stage / initial development.**
+Electron, React, TypeScript, Vite, Tailwind CSS, Monaco Editor, and SQLite (via Node's built-in `node:sqlite`). Repository access and the database live in the Electron main process; the renderer communicates through a restricted preload API.
 
-The initial repository has been created. The application's architecture, UI implementation, supported languages, and execution environment are still being developed.
+## Requirements and installation
 
-This README documents the intended direction of the project. It does **not** imply that the features listed above are already available.
+- Node.js 22.12 or later (22 LTS recommended) and npm.
+- Windows, macOS, or Linux with a graphical desktop. Linux also needs the system libraries required by Electron.
 
-## Proposed roadmap
+```sh
+npm ci
+```
 
-- [ ] Establish the desktop application foundation and base layout.
-- [ ] Implement the repository/file explorer.
-- [ ] Add a syntax-highlighted code workspace.
-- [ ] Support opening and reading a local repository.
-- [ ] Add contextual explanations for selected code.
-- [ ] Introduce guided learning paths and programming-concept lessons.
-- [ ] Build interactive coding exercises and validation.
-- [ ] Add quizzes, review, and learning-progress tracking.
-- [ ] Expand codebase-wide navigation and relationship visualizations.
+## Development
 
-Priorities and implementation choices may change as the project evolves.
+```sh
+npm run dev
+```
 
-## Getting started
+The command builds the Electron processes, starts Vite on `127.0.0.1:5173`, and opens the desktop window. Restart it after changing main-process or preload code.
 
-StudyRepo is not yet distributed as a runnable desktop application. Installation and development instructions will be added once the initial project scaffold is available.
+```sh
+npm run lint
+npm run typecheck
+npm test
+```
 
-For now, you can follow development, inspect upcoming changes, and participate in discussions through this repository.
+## Production build
+
+```sh
+npm run build
+npm start
+```
+
+This produces local application assets in `dist/` and `dist-electron/`; it does not yet create installers or distributable packages.
+
+## Current limitations
+
+- Local repositories only; no GitHub integration or account is required.
+- Repository analysis is read-only and ignores common generated directories and symbolic links. Files must be UTF-8 text and no larger than 2 MB. Unreadable files and directories are reported or skipped.
+- Language detection is based on file extensions. File progress means a file was opened, not that its contents were mastered; deleted files can remain in history.
+- The AI provider is a placeholder, not a model. The quiz and learning module are generic examples, not generated from the repository. No code execution engine is included.
+- SQLite data is stored in Electron's user-data directory, outside imported repositories. There is currently no data export, repository removal, migration UI, or installer.
+
+## Roadmap
+
+Future work could add real provider integrations, repository-aware explanations and quizzes, architecture visualization, richer learning activities, and packaged releases. Priorities and implementation choices may change as the project evolves.
 
 ## Contributing
 
-Contributions, feedback, ideas, and issue reports are welcome as the project takes shape.
-
-If you would like to contribute:
-
-1. Check the repository's issues and discussions for current priorities.
-2. Propose a focused change or feature.
-3. Open an issue or pull request describing the motivation and approach.
-
-Detailed development and pull-request guidelines will be added as the codebase matures.
+Contributions, feedback, ideas, and issue reports are welcome. Propose a focused change or feature, and open an issue or pull request describing its motivation and approach.
 
 ## License
 
-A license has not yet been specified. The intention is to develop StudyRepo as an open-source project; an explicit license will be added before public reuse and redistribution are encouraged. Until then, standard copyright restrictions apply.
+A license has not yet been specified. An explicit license will be added before public reuse and redistribution are encouraged. Until then, standard copyright restrictions apply.
 
 ---
 
