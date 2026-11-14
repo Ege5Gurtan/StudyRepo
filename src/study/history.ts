@@ -37,7 +37,7 @@ export function setChatMessages(archive: LearningArchive, messages: TutorMessage
 export function validateArchive(value: unknown): LearningArchive {
   if (!value || typeof value !== 'object') throw new Error('Invalid learning archive.');
   const archive = value as Partial<LearningArchive>;
-  if (!Array.isArray(archive.entries) || archive.entries.length > 100 ||
+  if (!Array.isArray(archive.entries) || archive.entries.length > 10000 ||
     !Number.isInteger(archive.activeIndex) ||
     (archive.activeIndex ?? -2) < -1 || (archive.activeIndex ?? -1) >= archive.entries.length ||
     (archive.entries.length === 0 && archive.activeIndex !== -1) ||
