@@ -37,6 +37,13 @@ export function titleConversationIfNew(store: ConversationStore, prompt: string)
       : item) };
 }
 
+export function nameConversationById(store: ConversationStore, id: string, prompt: string): ConversationStore {
+  return { ...store, conversations: store.conversations.map(item =>
+    item.id === id && item.title === 'New conversation'
+      ? { ...item, title: conversationTitle(prompt), updatedAt: new Date().toISOString() }
+      : item) };
+}
+
 export function renameConversation(store: ConversationStore, id: string, title: string): ConversationStore {
   const name = conversationTitle(title);
   return { ...store, conversations: store.conversations.map(item =>
