@@ -10,7 +10,7 @@ import { MockExplanationProvider } from './ai/provider';
 import { sampleQuiz } from './study/quiz';
 import type { Progress, Repository, ScanResult } from './shared/types';
 import { FileTree } from './components/FileTree';
-import { PracticeWorkspace } from './components/PracticeWorkspace';
+import { PracticeWorkspace, initialPracticeCode } from './components/PracticeWorkspace';
 import { TutorPanel } from './components/TutorPanel';
 
 self.MonacoEnvironment = {
@@ -42,7 +42,7 @@ export default function App() {
   const [answers, setAnswers] = useState<number[]>([]);
   const [feedback, setFeedback] = useState('');
   const [tutorVisible, setTutorVisible] = useState(true);
-  const [practiceCode, setPracticeCode] = useState('');
+  const [practiceCode, setPracticeCode] = useState(initialPracticeCode);
   const [practiceDiagnostics, setPracticeDiagnostics] = useState<string[]>([]);
   const [explanation, setExplanation] = useState('Select code in the editor, then request a mock explanation.');
   const [selection, setSelection] = useState({ startLine: 1, endLine: 1, code: '' });
