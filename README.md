@@ -154,3 +154,7 @@ A license has not yet been specified. An explicit license will be added before p
 ---
 
 **StudyRepo — don't just generate code. Understand it.**
+
+## Structured chat actions
+
+In Practice, requests such as "create a challenge about tile mechanics" are routed through an OpenAI function call rather than answered as a plain text exercise. A single focused challenge is opened in Monaco and saved in the active conversation's history. Requests for a series start a new learning set. Ordinary questions still receive explanatory chat responses. StudyRepo validates generated actions and never allows the model to execute repository code.
