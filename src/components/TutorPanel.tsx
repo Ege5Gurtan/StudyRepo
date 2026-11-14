@@ -4,12 +4,13 @@ import type { TutorMessage } from '../shared/types';
 interface Props {
   repository: string;
   context: 'Practice' | 'Explorer';
+  hidden?: boolean;
   code: string;
   sourceFile?: string;
   diagnostics?: string[];
 }
 
-export function TutorPanel({ repository, context, code, sourceFile, diagnostics = [] }: Props) {
+export function TutorPanel({ repository, context, code, sourceFile, diagnostics = [], hidden = false }: Props) {
   const [messages, setMessages] = useState<TutorMessage[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -35,7 +36,7 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
       setBusy(false);
     }
   }
-  return <aside className="tutor-panel" aria-label="AI Tutor">
+  return <aside className={`tutor-panel ${hidden ? "tutor-hidden" : ""}`} aria-label="AI Tutor" aria-hidden={hidden}>
     <div className="tutor-heading"><span>✦ AI Tutor</span><button className="tutor-clear" onClick={() => { setMessages([]); setError(''); }} disabled={busy || messages.length === 0}>Clear chat</button></div>
     <div className="tutor-context">{repository} / {context}{sourceFile ? ` / ${sourceFile}` : ''}</div>
     <div className="tutor-chat" aria-live="polite">
