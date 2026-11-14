@@ -6,12 +6,13 @@ import JsonWorker from 'monaco-editor/language/json/json.worker.js?worker';
 import CssWorker from 'monaco-editor/language/css/css.worker.js?worker';
 import HtmlWorker from 'monaco-editor/language/html/html.worker.js?worker';
 import TsWorker from 'monaco-editor/language/typescript/ts.worker.js?worker';
-import type { IndexSummary, LearningArchive, Repository, ScanResult } from './shared/types';
+import type { ConversationStore, LearningArchive, IndexSummary, Repository, ScanResult } from './shared/types';
 import { FileTree } from './components/FileTree';
 import { SymbolExplorer } from './components/SymbolExplorer';
 import { LearningWorkspace } from './components/LearningWorkspace';
 import { TutorPanel } from './components/TutorPanel';
-import { addChallenge, changeChallengeCode, emptyArchive, recordEvaluation, selectChallenge, setChatMessages, skipChallenge } from './study/history';
+import { addChallenge, changeChallengeCode, recordEvaluation, selectChallenge, setChatMessages, skipChallenge } from './study/history';
+import { emptyConversations, newConversation, selectConversation, changeConversationArchive, updateConversationById, titleConversationIfNew, renameConversation, deleteConversation } from './study/conversations';
 
 self.MonacoEnvironment = {
   getWorker(_workerId, label) {
@@ -41,7 +42,13 @@ export default function App() {
   const [error, setError] = useState('');
   const [theme, setTheme] = useState<'dark' | 'light'>(() => localStorage.getItem('theme') === 'light' ? 'light' : 'dark');
   const [tutorVisible, setTutorVisible] = useState(true);
-  const [archive, setArchive] = useState<LearningArchive>(emptyArchive);
+  const [conversationStore, setConversationStore] = useState<ConversationStore>(emptyConversations);
+  const activeConversation = conversationStore.conversations.find(item => item.id === conversationStore.activeId);
+  const archive: LearningArchive = activeConversation?.archive ?? { entries: [], activeIndex: -1, messages: [] };
+  const setArchive = (update: LearningArchive | ((archive: LearningArchive) => LearningArchive)) => {
+    setConversationStore(old => changeConversationArchive(old, current =>
+      typeof update === 'function' ? update(current) : update));
+  };
   const [archiveReady, setArchiveReady] = useState(false);
   const [awaitingGoal, setAwaitingGoal] = useState(true);
   const [learningBusy, setLearningBusy] = useState(false);
@@ -56,15 +63,15 @@ export default function App() {
   async function loadRepository(repo: Repository) {
     const epoch = ++learningEpoch.current;
     const previousRepository = scan?.repository.path;
-    const previousArchive = archive;
+    const previousStore = conversationStore;
     const shouldFlush = archiveReady && !!previousRepository;
     setArchiveReady(false);
     try {
       setError('');
-      if (shouldFlush) await window.studyRepo.saveLearningArchive(previousRepository!, previousArchive);
-      const [nextScan, nextIndex, saved] = await Promise.all([window.studyRepo.scanRepository(repo.path), window.studyRepo.getIndexSummary(repo.path), window.studyRepo.loadLearningArchive(repo.path)]);
+      if (shouldFlush) await window.studyRepo.saveConversations(previousRepository!, previousStore);
+      const [nextScan, nextIndex, saved] = await Promise.all([window.studyRepo.scanRepository(repo.path), window.studyRepo.getIndexSummary(repo.path), window.studyRepo.loadConversations(repo.path)]);
       if (epoch !== learningEpoch.current) return;
-      setLearningBusy(false); setArchive(saved); setArchiveReady(true); setAwaitingGoal(saved.entries.length === 0); setScan(nextScan); setIndexSummary(nextIndex); setJump(null); setTabs([]); setActive(''); setPage('Practice'); setLearningError('');
+      setLearningBusy(false); setConversationStore(saved); setArchiveReady(true); setAwaitingGoal(!(saved.conversations.find(item => item.id === saved.activeId)?.archive.entries.length)); setScan(nextScan); setIndexSummary(nextIndex); setJump(null); setTabs([]); setActive(''); setPage('Practice'); setLearningError('');
     } catch (e) { if (epoch === learningEpoch.current) setError(String(e)); }
   }
   async function importRepository() {
@@ -99,7 +106,7 @@ export default function App() {
       setRepositories(await window.studyRepo.listRepositories());
       if (scan?.repository.path === repo.path) {
         learningEpoch.current++;
-        setLearningBusy(false); setScan(null); setTabs([]); setActive(''); setIndexSummary(null); setJump(null); setArchive(emptyArchive()); setArchiveReady(false); setAwaitingGoal(true);
+        setLearningBusy(false); setScan(null); setTabs([]); setActive(''); setIndexSummary(null); setJump(null); setConversationStore(emptyConversations()); setArchiveReady(false); setAwaitingGoal(true);
         setPage('Overview');
       }
     } catch (e) { setError(String(e)); }
@@ -114,19 +121,22 @@ export default function App() {
     if (!archiveReady || !scan) return;
     const root = scan.repository.path;
     const timer = setTimeout(() => {
-      window.studyRepo.saveLearningArchive(root, archive).catch(e => setLearningError(String(e)));
+      window.studyRepo.saveConversations(root, conversationStore).catch(e => setLearningError(String(e)));
     }, 300);
     return () => clearTimeout(timer);
-  }, [archive, archiveReady, scan?.repository.path]);
+  }, [conversationStore, archiveReady, scan?.repository.path]);
 
   async function startLearning(goal: string): Promise<string> {
     if (!scan || !archiveReady) throw new Error('Import a repository first.');
     const epoch = learningEpoch.current;
+    const conversationId = conversationStore.activeId;
+    if (!conversationId) throw new Error('Create a conversation first.');
     setLearningBusy(true); setLearningError('');
     try {
       const session = await window.studyRepo.generateLesson({ repository: scan.repository.path, goal, mode: 'start' });
       if (epoch !== learningEpoch.current) throw new Error('Repository changed; learning request cancelled.');
-      setArchive(old => addChallenge(old, session));
+      setConversationStore(old => titleConversationIfNew(
+        updateConversationById(old, conversationId, current => addChallenge(current, session)), goal));
       setAwaitingGoal(false);
       return session.lesson.introduction + '\\n\\n' + session.lesson.explanation;
     } catch (e) { if (epoch === learningEpoch.current) setLearningError(String(e)); throw e; }
@@ -135,14 +145,16 @@ export default function App() {
   async function evaluateCode() {
     if (!scan || !activeEntry || !archiveReady) return;
     const epoch = learningEpoch.current;
+    const conversationId = conversationStore.activeId;
     const id = activeEntry.id;
     const submittedCode = activeEntry.code;
     setLearningBusy(true); setLearningError('');
     try {
       const result = await window.studyRepo.evaluateSolution({ repository: scan.repository.path, lesson: activeEntry.session.lesson, code: submittedCode });
       if (epoch === learningEpoch.current) {
-        setArchive(old => old.entries[old.activeIndex]?.id === id
-          ? recordEvaluation(old, result, submittedCode)
+        setConversationStore(old => conversationId
+          ? updateConversationById(old, conversationId, previous => previous.entries[previous.activeIndex]?.id === id
+            ? recordEvaluation(previous, result, submittedCode) : previous)
           : old);
       }
     } catch (e) { if (epoch === learningEpoch.current) setLearningError(String(e)); }
@@ -152,6 +164,7 @@ export default function App() {
     if (!scan || !activeEntry || !archiveReady) throw new Error('Import a repository and start learning first.');
     if (archive.activeIndex !== archive.entries.length - 1 && !focus) throw new Error('Open your latest challenge before advancing.');
     const epoch = learningEpoch.current;
+    const conversationId = conversationStore.activeId;
     const currentEntry = activeEntry;
     const currentSession = currentEntry.session;
     const index = mode === 'next' ? currentSession.topicIndex + 1 : currentSession.topicIndex;
@@ -184,6 +197,40 @@ export default function App() {
     // A natural-language request generates structured app content, not just a text list.
     return advanceLearning('extend', false, request);
   }
+  function createChat() {
+    learningEpoch.current++;
+    setLearningBusy(false);
+    setConversationStore(old => newConversation(old));
+    setAwaitingGoal(true);
+    setLearningError('');
+    setPage('Practice');
+  }
+  function openChat(id: string) {
+    if (id === conversationStore.activeId) { setPage('Practice'); return; }
+    learningEpoch.current++;
+    setLearningBusy(false);
+    setConversationStore(old => selectConversation(old, id));
+    const next = conversationStore.conversations.find(item => item.id === id);
+    setAwaitingGoal(!next?.archive.entries.length);
+    setLearningError('');
+    setPage('Practice');
+  }
+  function removeChat(id: string) {
+    const found = conversationStore.conversations.find(item => item.id === id);
+    if (!found || !window.confirm('Delete conversation "' + found.title + '" and its challenges?')) return;
+    learningEpoch.current++;
+    setLearningBusy(false);
+    const next = deleteConversation(conversationStore, id);
+    setConversationStore(next);
+    setAwaitingGoal(!(next.conversations.find(item => item.id === next.activeId)?.archive.entries.length));
+    setLearningError('');
+  }
+  function renameChat(id: string) {
+    const found = conversationStore.conversations.find(item => item.id === id);
+    if (!found) return;
+    const name = window.prompt('Conversation name', found.title);
+    if (name?.trim()) setConversationStore(old => renameConversation(old, id, name));
+  }
   function navigateHistory(index: number) {
     if (learningBusy) return;
     setArchive(old => selectChallenge(old, index));
@@ -203,6 +250,16 @@ export default function App() {
       <button className="import-button" onClick={importRepository}>+ Import repository</button>
       <div className="sidebar-label">WORKSPACE</div>
       <nav>{pages.map((item, index) => <button key={item} className={page === item ? 'nav-active' : ''} onClick={() => setPage(item)}><span className="nav-icon">{['◫', '▤', '⌘', '⚙'][index]}</span>{item}</button>)}</nav>
+      {scan && <section className="conversation-sidebar" aria-label="Recent conversations">
+        <div className="conversation-heading"><span>RECENT CONVERSATIONS</span><button onClick={createChat}>+ New chat</button></div>
+        <div className="conversation-list">{[...conversationStore.conversations].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).map(item =>
+          <div className={item.id === conversationStore.activeId ? 'conversation-item active-conversation' : 'conversation-item'} key={item.id}>
+            <button className="conversation-open" title={item.title} onClick={() => openChat(item.id)}>{item.title}</button>
+            <button className="conversation-action" title="Rename conversation" aria-label={'Rename '+item.title} onClick={() => renameChat(item.id)}>✎</button>
+            <button className="conversation-action" title="Delete conversation" aria-label={'Delete '+item.title} onClick={() => removeChat(item.id)}>×</button>
+          </div>)}
+        </div>
+      </section>}
       <div className="sidebar-label">RECENT REPOSITORIES</div>
       <div className="recent">{repositories.length ? repositories.map(repo => <div className={`recent-item ${scan?.repository.path === repo.path ? 'selected-repo' : ''}`} key={repo.path}><button title={repo.path} className="recent-open" onClick={() => { void loadRepository(repo); }}>{repo.name}</button><button className="recent-remove" aria-label={`Remove ${repo.name} from StudyRepo`} title="Remove from StudyRepo (files stay on disk)" onClick={() => { void removeImportedRepository(repo); }}>×</button></div>) : <p>No repositories yet</p>}</div>
       <div className="sidebar-footer">Local-first · Private by design</div>
@@ -218,7 +275,7 @@ export default function App() {
         <div className="card modules"><div><h2>Browse source code</h2><p className="muted">Find source files and symbols in the imported repository. {indexSummary?.indexedAt ? `${indexSummary.symbols} symbols indexed.` : 'Source index not built yet.'}</p></div><button onClick={() => setPage('Explorer')}>Open Explorer →</button></div>
       </section> :
       scan && page === 'Explorer' ? <div className="workspace-with-tutor"><div className="explorer"><div className="file-panel"><div className="panel-title">EXPLORER <span>{scan.fileCount} files</span></div><div className="repo-heading">▾ {scan.repository.name}</div><FileTree nodes={scan.tree} open={file => { void openFile(file); }}/><SymbolExplorer repository={scan.repository.path} summary={indexSummary} onIndexed={setIndexSummary} onOpen={(file, line) => { void openFile(file, line); }}/></div><div className="editor-area"><div className="tabs">{tabs.map(tab => <div className={`tab ${active === tab.path ? 'active-tab' : ''}`} key={tab.path}><button title={tab.path} onClick={() => { setActive(tab.path); setSelection({ startLine: 1, endLine: 1, code: '' }); }}>{tab.path.split(/[\\\\/]/).pop()}</button><button aria-label={`Close ${tab.path}`} onClick={() => { const rest = tabs.filter(t => t.path !== tab.path); setTabs(rest); if (active === tab.path) setActive(rest.at(-1)?.path ?? ''); }}>×</button></div>)}</div>{current ? <Editor path={current.path} value={current.content} theme={theme === 'dark' ? 'vs-dark' : 'light'} options={{ readOnly: true, minimap: { enabled: false }, fontSize: 13, scrollBeyondLastLine: false, automaticLayout: true }} onMount={editor => { explorerEditor.current = editor; if (jump && jump.file === active) { editor.revealLineInCenter(jump.line); editor.setPosition({ lineNumber: jump.line, column: 1 }); } editor.onDidChangeCursorSelection(event => { const range = event.selection; setSelection({ startLine: range.startLineNumber, endLine: range.endLineNumber, code: editor.getModel()?.getValueInRange(range) ?? '' }); }); }} /> : <div className="editor-empty">Select a file to explore</div>}</div></div><TutorPanel hidden={!tutorVisible} key={scan.repository.path + ':explorer'} repository={scan.repository.path} context="Explorer" sourceFile={current?.path} code={selection.code || current?.content.slice(0, 12000) || ''}/></div> :
-      scan && page === 'Practice' ? <div className="workspace-with-tutor"><LearningWorkspace session={learning} challengeId={activeEntry?.id ?? ''} code={practiceCode} onCodeChange={value => setArchive(old => changeChallengeCode(old, value))} evaluation={evaluationCode === practiceCode ? evaluation : null} attempts={activeEntry?.attempts ?? []} entries={archive.entries} activeIndex={archive.activeIndex} busy={learningBusy || !archiveReady} error={learningError} onEvaluate={() => { void evaluateCode(); }} onRestart={() => { learningEpoch.current++; setLearningBusy(false); setAwaitingGoal(true); setArchive(old => setChatMessages(old, [])); setLearningError(''); }} onAdvance={mode => { void advanceLearning(mode).catch(() => {}); }} onSkip={() => { void advanceLearning('next', true).catch(() => {}); }} onNavigate={navigateHistory} onRestoreAttempt={index => { const attempt = activeEntry?.attempts[index]; if (attempt) setArchive(old => changeChallengeCode(old, attempt.code)); }} onOpenSource={(file, line) => { void openFile(file, line); }}/><TutorPanel hidden={!tutorVisible} key={scan.repository.path + ":practice"} repository={scan.repository.path} context="Practice" code={tutorLearningCode} learningStarted={!!learning} onStartLearning={startLearning} onGenerateChallenges={generateChallengesFromChat} messages={archive.messages} onMessagesChange={messages => setArchive(old => setChatMessages(old, messages))}/></div> :
+      scan && page === 'Practice' ? <div className="workspace-with-tutor"><LearningWorkspace session={learning} challengeId={activeEntry?.id ?? ''} code={practiceCode} onCodeChange={value => setArchive(old => changeChallengeCode(old, value))} evaluation={evaluationCode === practiceCode ? evaluation : null} attempts={activeEntry?.attempts ?? []} entries={archive.entries} activeIndex={archive.activeIndex} busy={learningBusy || !archiveReady} error={learningError} onEvaluate={() => { void evaluateCode(); }} onRestart={createChat} onAdvance={mode => { void advanceLearning(mode).catch(() => {}); }} onSkip={() => { void advanceLearning('next', true).catch(() => {}); }} onNavigate={navigateHistory} onRestoreAttempt={index => { const attempt = activeEntry?.attempts[index]; if (attempt) setArchive(old => changeChallengeCode(old, attempt.code)); }} onOpenSource={(file, line) => { void openFile(file, line); }}/><TutorPanel hidden={!tutorVisible} key={scan.repository.path + ":practice:" + (conversationStore.activeId ?? "none")} repository={scan.repository.path} context="Practice" code={tutorLearningCode} learningStarted={!!learning} onStartLearning={startLearning} onGenerateChallenges={generateChallengesFromChat} messages={archive.messages} onMessagesChange={messages => { const id = conversationStore.activeId; if (id) setConversationStore(old => updateConversationById(old, id, a => setChatMessages(a, messages))); }}/></div> :
       null}
 
     </main>
