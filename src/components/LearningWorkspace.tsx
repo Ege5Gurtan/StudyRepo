@@ -32,14 +32,10 @@ export function LearningWorkspace({ session, code, onCodeChange, evaluation, bus
       <h2>{topic?.title ?? challenge.title}</h2>
       <p className="muted">{topic?.objective}</p>
       <div className="learning-plan">{session.topics.map((item, index) => <span className={index === session.topicIndex ? 'learning-active-topic' : ''} key={item.id}>{index + 1}. {item.title}</span>)}</div>
-      <div className="learning-explanation">
-        <strong>{session.lesson.introduction}</strong>
-        <p>{session.lesson.explanation}</p>
-      </div>
       {session.lesson.references.length > 0 && <div className="learning-references"><span className="eyebrow">FROM YOUR REPOSITORY</span>{session.lesson.references.map((ref, index) => <button key={index} onClick={() => onOpenSource(ref.file, ref.startLine)}>{ref.file}:{ref.startLine}–{ref.endLine} ↗</button>)}</div>}
       <h2 className="learning-challenge-title">{challenge.title}</h2>
       <p>{challenge.description}</p>
-      <div className="learning-criteria"><strong>What the AI will review:</strong><ul>{challenge.criteria.map((criterion, index) => <li key={index}>{criterion}</li>)}</ul></div>
+      <details className="learning-criteria"><summary>Evaluation criteria ({challenge.criteria.length})</summary><ul>{challenge.criteria.map((criterion, index) => <li key={index}>{criterion}</li>)}</ul></details>
     </div>
     <div className="practice-editor">
       <div className="practice-editor-heading">{challenge.language} · Your scratchpad (repository files are unchanged)</div>
