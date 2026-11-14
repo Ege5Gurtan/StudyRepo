@@ -174,3 +174,5 @@ input { accent-color: #8270e4; }
 .learning-next-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
 .learning-next-actions button { border-radius: 7px; padding: 9px 12px; }
 .learning-next-actions button:not(.primary) { color: var(--text); background: var(--side); border: 1px solid var(--border); }
+
+.learning-restart { border: 1px solid var(--border); background: var(--card); color: var(--text); padding: 6px 9px; border-radius: 6px; font-size: 11px; }
