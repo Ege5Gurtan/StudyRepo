@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { askTutorWithActions, parseTutorAction } from '../electron/tutor-actions';
+import { askTutorWithActions, explicitlyRequestsChallenge, parseTutorAction } from '../electron/tutor-actions';
 
 const base = {
   repository: '/sample', context: 'Practice' as const,
@@ -41,10 +41,29 @@ describe('structured tutor actions', () => {
     expect(url).toBe('https://api.openai.com/v1/responses');
     const sent = JSON.parse(String(init.body)) as { store: boolean; tools: { name: string }[]; tool_choice: string; parallel_tool_calls: boolean };
     expect(sent.store).toBe(false);
-    expect(sent.tool_choice).toBe('auto');
+    expect(sent.tool_choice).toBe('required');
     expect(sent.parallel_tool_calls).toBe(false);
     expect(sent.tools.map(t => t.name)).toEqual(['generate_challenge']);
   });
+  it('requires an action for explicit imperative requests but not for ordinary explanations', () => {
+    expect(explicitlyRequestsChallenge('create challenge about the tile mechanics')).toBe(true);
+    expect(explicitlyRequestsChallenge('Give me another set of challenges.')).toBe(true);
+    expect(explicitlyRequestsChallenge('Explain what this code does.')).toBe(false);
+    expect(explicitlyRequestsChallenge('Can you explain the next challenge?')).toBe(false);
+  });
+
+  it('leaves the model free to answer normal questions', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'test-key');
+    const mock = vi.fn(async () => ({
+      ok: true, json: async () => ({ output: [{ type: 'message', content: [{ type: 'output_text', text: 'A loop iterates.' }] }] })
+    }));
+    vi.stubGlobal('fetch', mock);
+    const result = await askTutorWithActions({ ...base, question: 'Explain loops to me' });
+    expect(result).toEqual({ type: 'message', text: 'A loop iterates.' });
+    const body = JSON.parse(String((mock.mock.calls[0] as unknown as [string, RequestInit])[1].body)) as { tool_choice: string };
+    expect(body.tool_choice).toBe('auto');
+  });
+
   it('does not allow structured actions outside Practice', async () => {
     await expect(askTutorWithActions({ ...base, context: 'Explorer' })).rejects.toThrow('Practice');
   });
