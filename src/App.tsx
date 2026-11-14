@@ -150,7 +150,7 @@ export default function App() {
   }
   async function advanceLearning(mode: 'next' | 'similar' | 'extend', skip = false, focus?: string): Promise<string> {
     if (!scan || !activeEntry || !archiveReady) throw new Error('Import a repository and start learning first.');
-    if (archive.activeIndex !== archive.entries.length - 1) throw new Error('Open your latest challenge before generating another one.');
+    if (archive.activeIndex !== archive.entries.length - 1 && !focus) throw new Error('Open your latest challenge before advancing.');
     const epoch = learningEpoch.current;
     const currentEntry = activeEntry;
     const currentSession = currentEntry.session;
