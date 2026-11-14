@@ -146,3 +146,31 @@ input { accent-color: #8270e4; }
 .tutor-panel .tutor-chat { min-height: 160px; }
 
 .tutor-panel.tutor-hidden { display: none; }
+
+/* Adaptive learning session */
+.learning-workspace { overflow: auto; }
+.learning-welcome { padding: 32px; display: flex; align-items: flex-start; }
+.learning-hero { max-width: 760px; padding: 28px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+.learning-hero h2 { font-size: 23px; margin-top: 12px; }
+.learning-hero p { font-size: 14px; }
+.learning-problem { padding-bottom: 20px; }
+.learning-topline { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.learning-plan { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 18px; }
+.learning-plan span { font-size: 11px; background: var(--card); color: var(--muted); border: 1px solid var(--border); border-radius: 16px; padding: 5px 9px; }
+.learning-plan .learning-active-topic { color: var(--text); border-color: var(--accent); }
+.learning-explanation { padding: 15px; border: 1px solid var(--border); background: var(--card); border-radius: 9px; margin-bottom: 18px; }
+.learning-explanation strong { font-size: 14px; }
+.learning-explanation p { margin-bottom: 0; white-space: pre-wrap; }
+.learning-references { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-bottom: 15px; }
+.learning-references button { color: var(--accent); border: 1px solid var(--border); background: var(--card); border-radius: 6px; padding: 6px 9px; font-size: 11px; }
+.learning-challenge-title { margin-top: 18px; }
+.learning-criteria { color: var(--muted); font-size: 12px; }
+.learning-criteria ul { margin: 5px 0 0; padding-left: 22px; }
+.learning-evaluation { padding-bottom: 20px; }
+.learning-feedback { padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }
+.learning-feedback p { white-space: pre-wrap; }
+.learning-feedback ul { padding-left: 20px; }
+.learning-feedback li { padding-bottom: 4px; }
+.learning-next-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.learning-next-actions button { border-radius: 7px; padding: 9px 12px; }
+.learning-next-actions button:not(.primary) { color: var(--text); background: var(--side); border: 1px solid var(--border); }
