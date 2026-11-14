@@ -144,3 +144,5 @@ input { accent-color: #8270e4; }
 .tutor-heading .tutor-clear:hover { color: var(--text); }
 .tutor-compose button:disabled { opacity: .45; }
 .tutor-panel .tutor-chat { min-height: 160px; }
+
+.tutor-panel.tutor-hidden { display: none; }
