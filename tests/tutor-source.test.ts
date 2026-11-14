@@ -25,7 +25,7 @@ describe('source-grounded tutor questions', () => {
   });
 
   it('labels partial excerpts and retrieves later requested line ranges', () => {
-    const content = Array.from({ length: 500 }, (_, i) => 'Line ' + (i + 1) + ': void Tick() {}').join('\n');
+    const content = Array.from({ length: 500 }, (_, i) => 'Line ' + (i + 1) + ': ' + 'void Tick() {};'.repeat(12)).join('\n');
     const first = excerptSource(content, 'WorldManager.cpp', 'explain');
     expect(first).toContain('PARTIAL EXCERPT');
     expect(first).toContain('of 500');
