@@ -19,6 +19,22 @@ export class Database {
   addRepository(repo: Repository): void {
     this.db.prepare('INSERT INTO repositories VALUES (?, ?, ?) ON CONFLICT(path) DO UPDATE SET name=excluded.name, opened_at=excluded.opened_at').run(repo.path, repo.name, new Date().toISOString());
   }
+  removeRepository(root: string): void {
+    if (!this.hasRepository(root)) throw new Error('Repository has not been imported.');
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      this.db.prepare('DELETE FROM code_symbols WHERE repository = ?').run(root);
+      this.db.prepare('DELETE FROM index_files WHERE repository = ?').run(root);
+      this.db.prepare('DELETE FROM index_status WHERE repository = ?').run(root);
+      this.db.prepare('DELETE FROM studied_files WHERE repository = ?').run(root);
+      this.db.prepare('DELETE FROM quiz_results WHERE repository = ?').run(root);
+      this.db.prepare('DELETE FROM repositories WHERE path = ?').run(root);
+      this.db.exec('COMMIT');
+    } catch (error) {
+      this.db.exec('ROLLBACK');
+      throw error;
+    }
+  }
   hasRepository(root: string): boolean {
     return !!this.db.prepare('SELECT path FROM repositories WHERE path = ?').get(root);
   }
