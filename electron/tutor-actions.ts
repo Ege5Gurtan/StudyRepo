@@ -39,8 +39,8 @@ export function parseTutorAction(value: unknown): TutorAction {
 // Strongly steer explicit imperative exercise requests while allowing the model
 // to interpret open-ended intentions and choose tools for other wording.
 export function explicitlyRequestsChallenge(question: string): boolean {
-  return /\\b(?:create|generate|make|give|design|prepare|write)\\b.{0,100}\\b(?:challenges?|exercises?|coding problems?|practice problems?)\\b/i.test(question) ||
-    /\\b(?:another|new|more|fresh)\\s+(?:(?:set|series|batch)\\s+of\\s+)?(?:coding\\s+)?(?:challenges?|exercises?)\\b/i.test(question);
+  return /\b(?:create|generate|make|give|design|prepare|write)\b.{0,100}\b(?:challenges?|exercises?|coding problems?|practice problems?)\b/i.test(question) ||
+    /\b(?:another|new|more|fresh)\s+(?:(?:set|series|batch)\s+of\s+)?(?:coding\s+)?(?:challenges?|exercises?)\b/i.test(question);
 }
 
 export async function askTutorWithActions(requestValue: unknown): Promise<TutorAction> {
