@@ -28,6 +28,7 @@ export function LearningWorkspace({ session, challengeId, entries, activeIndex, 
       <h2>Tell your AI Tutor what you want to learn</h2>
       <p>Describe your experience level and the subjects you want to explore. Your tutor will select relevant files, explain a concept, and create a small coding challenge based on your repository.</p>
       <p className="muted">Start in the chat panel on the right. Repository files remain read-only.</p>
+      {entries.length > 0 && <div className="saved-learning-list"><h3>Previous challenges</h3>{entries.map((entry, index) => <button key={entry.id} disabled={busy} onClick={() => onNavigate(index)}>{index + 1}. {entry.session.lesson.challenge.title} <span>↗</span></button>)}</div>}
     </div>
   </section>;
   const topic = session.topics[session.topicIndex];
