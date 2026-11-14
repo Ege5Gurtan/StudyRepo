@@ -14,10 +14,11 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  async function send(question: string) {
+  async function send(question: string, retry = false) {
     const q = question.trim();
     if (!q || busy) return;
-    const updated: TutorMessage[] = [...messages, { role: 'user', content: q }];
+    const history = retry ? messages.slice(0, -1) : messages;
+    const updated: TutorMessage[] = [...history, { role: 'user', content: q }];
     setMessages(updated);
     setInput('');
     setBusy(true);
@@ -25,7 +26,7 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
     try {
       const answer = await window.studyRepo.askTutor({
         repository, context, code: code.slice(0, 12000), sourceFile,
-        question: q, diagnostics, history: messages.slice(-10)
+        question: q, diagnostics, history: history.slice(-10)
       });
       setMessages(current => [...current, { role: 'assistant', content: answer }]);
     } catch (e) {
@@ -42,7 +43,7 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
       {messages.map((message, index) => <div className={`tutor-message ${message.role === 'user' ? 'student' : 'tutor'}`} key={index}>{message.content}</div>)}
       {busy && <p role="status" className="muted">Thinking…</p>}
     </div>
-    {error && <p className="tutor-error" role="alert">{error} <button onClick={() => { void send(messages.at(-1)?.role === 'user' ? messages.at(-1)?.content ?? '' : ''); }}>Retry</button></p>}
+    {error && <p className="tutor-error" role="alert">{error} <button onClick={() => { void send(messages.at(-1)?.role === 'user' ? messages.at(-1)?.content ?? '' : '', true); }}>Retry</button></p>}
     <div className="tutor-actions">
       <button disabled={busy} onClick={() => { void send('Give me a hint, without revealing the full solution.'); }}>Give hint</button>
       <button disabled={busy} onClick={() => { void send('Explain the programming concepts in this code.'); }}>Explain concepts</button>
