@@ -182,10 +182,10 @@ export default function App() {
         focus: focus?.slice(0, 1500)
       });
       if (epoch !== learningEpoch.current) throw new Error('Repository changed; new challenge request cancelled.');
-      setArchive(old => {
-        if (old.entries[old.activeIndex]?.id !== currentEntry.id) return old;
-        return addChallenge(skip ? skipChallenge(old) : old, session);
-      });
+      setConversationStore(old => conversationId ? updateConversationById(old, conversationId, previous => {
+        if (previous.entries[previous.activeIndex]?.id !== currentEntry.id) return previous;
+        return addChallenge(skip ? skipChallenge(previous) : previous, session);
+      }) : old);
       return extend
         ? 'I created a new learning set with ' + session.topics.length + ' topics. The first challenge, "' + session.lesson.challenge.title + '", is now in your code workspace. The rest will be generated as you continue.'
         : 'Your next challenge, "' + session.lesson.challenge.title + '", is now in the code workspace.';
