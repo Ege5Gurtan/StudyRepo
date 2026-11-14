@@ -56,11 +56,61 @@ export interface TutorRequest {
   diagnostics?: string[];
   history: TutorMessage[];
 }
+export interface LearningReference {
+  file: string;
+  startLine: number;
+  endLine: number;
+}
+export interface LearningTopic {
+  id: string;
+  title: string;
+  objective: string;
+}
+export interface CodingChallenge {
+  title: string;
+  description: string;
+  language: string;
+  starterCode: string;
+  criteria: string[];
+}
+export interface LearningLesson {
+  introduction: string;
+  explanation: string;
+  references: LearningReference[];
+  challenge: CodingChallenge;
+}
+export interface LearningSession {
+  goal: string;
+  topics: LearningTopic[];
+  topicIndex: number;
+  lesson: LearningLesson;
+  sourceContext: string;
+}
+export interface LearningEvaluation {
+  status: 'passed' | 'needs_revision' | 'unable_to_verify';
+  feedback: string;
+  criteria: { criterion: string; met: boolean; explanation: string }[];
+}
+export interface LearningGenerateRequest {
+  repository: string;
+  goal: string;
+  mode: 'start' | 'next' | 'similar';
+  topics?: LearningTopic[];
+  topicIndex?: number;
+  previousChallenge?: CodingChallenge;
+}
+export interface LearningEvaluateRequest {
+  repository: string;
+  lesson: LearningLesson;
+  code: string;
+}
 export interface StudyRepoAPI {
   listRepositories(): Promise<Repository[]>;
   importRepository(): Promise<Repository | null>;
   removeRepository(path: string): Promise<void>;
   askTutor(request: TutorRequest): Promise<string>;
+  generateLesson(request: LearningGenerateRequest): Promise<LearningSession>;
+  evaluateSolution(request: LearningEvaluateRequest): Promise<LearningEvaluation>;
   scanRepository(path: string): Promise<ScanResult>;
   readFile(repository: string, path: string): Promise<string>;
   markStudied(repository: string, path: string): Promise<void>;
