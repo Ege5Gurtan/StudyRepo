@@ -11,13 +11,15 @@ interface Props {
   onStartLearning?: (goal: string) => Promise<string>;
   onGenerateChallenges?: (request: string, scope: 'single' | 'set') => Promise<string>;
   messages?: TutorMessage[];
+  pending?: boolean;
+  onSendMessage?: (question: string) => void;
   onMessagesChange?: (messages: TutorMessage[]) => void;
   code: string;
   sourceFile?: string;
   diagnostics?: string[];
 }
 
-export function TutorPanel({ repository, context, code, sourceFile, diagnostics = [], hidden = false, learningStarted = true, onStartLearning, onGenerateChallenges, messages: controlledMessages, onMessagesChange }: Props) {
+export function TutorPanel({ repository, context, code, sourceFile, diagnostics = [], hidden = false, learningStarted = true, onStartLearning, onGenerateChallenges, messages: controlledMessages, onMessagesChange, pending = false, onSendMessage }: Props) {
   const [localMessages, setLocalMessages] = useState<TutorMessage[]>([]);
   const messages = controlledMessages ?? localMessages;
   const setMessages = (update: TutorMessage[] | ((old: TutorMessage[]) => TutorMessage[])) => {
@@ -30,7 +32,8 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
   const [error, setError] = useState('');
   async function send(question: string, retry = false) {
     const q = question.trim();
-    if (!q || busy) return;
+    if (!q || busy || pending) return;
+    if (onSendMessage) { setInput(''); onSendMessage(q); return; }
     const history = retry ? messages.slice(0, -1) : messages;
     const updated = withStudentMessage(history, q);
     setMessages(updated);
@@ -64,16 +67,16 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
     }
   }
   return <aside className={`tutor-panel ${hidden ? "tutor-hidden" : ""}`} aria-label="AI Tutor" aria-hidden={hidden}>
-    <div className="tutor-heading"><span>✦ AI Tutor</span><button className="tutor-clear" onClick={() => { setMessages([]); setError(''); }} disabled={busy || messages.length === 0}>Clear chat</button></div>
+    <div className="tutor-heading"><span>✦ AI Tutor</span><button className="tutor-clear" onClick={() => { setMessages([]); setError(''); }} disabled={busy || pending || messages.length === 0}>Clear chat</button></div>
     <div className="tutor-context">{repository} / {context}{sourceFile ? ` / ${sourceFile}` : ''}</div>
     <div className="tutor-chat" aria-live="polite">
       {messages.length === 0 && <p className="muted">Tell me what you'd like to study, or ask about your current challenge. I'll guide you through the reasoning.</p>}
       {messages.map((message, index) => <div className={`tutor-message ${message.role === 'user' ? 'student' : 'tutor'}`} key={index}>{message.role === 'assistant' ? <RichTutorMessage content={message.content}/> : message.content}</div>)}
-      {busy && <p role="status" className="muted">Thinking…</p>}
+      {(busy || pending) && <p role="status" className="muted">Thinking…</p>}
     </div>
     {error && <p className="tutor-error" role="alert">{error} <button onClick={() => { void send(messages.at(-1)?.role === 'user' ? messages.at(-1)?.content ?? '' : '', true); }}>Retry</button></p>}
     <div className="tutor-actions">
-      {learningStarted && context === 'Practice' && onGenerateChallenges && <button disabled={busy} onClick={() => { void send('Give me another set of coding challenges.'); }}>Generate challenges</button>}
+      {learningStarted && context === 'Practice' && onGenerateChallenges && <button disabled={busy || pending} onClick={() => { void send('Give me another set of coding challenges.'); }}>Generate challenges</button>}
       {learningStarted && <button disabled={busy} onClick={() => { void send('Give me a hint, without revealing the full solution.'); }}>Give hint</button>}
       {learningStarted && <button disabled={busy} onClick={() => { void send('Explain the programming concepts in this code.'); }}>Explain concepts</button>}
       {diagnostics.length > 0 && <button disabled={busy} onClick={() => { void send('Explain these test diagnostics and guide me toward fixing them.'); }}>Explain errors</button>}
