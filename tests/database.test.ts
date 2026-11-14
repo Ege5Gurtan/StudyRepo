@@ -5,6 +5,30 @@ import path from 'node:path';
 import { Database } from '../electron/database';
 
 describe('local database', () => {
+  it('removes imported repository metadata without touching any source folder', () => {
+    const directory = mkdtempSync(path.join(os.tmpdir(), 'studyrepo-remove-db-'));
+    const filename = path.join(directory, 'db.sqlite');
+    try {
+      const db = new Database(filename);
+      db.addRepository({ path: '/one', name: 'one' });
+      db.addRepository({ path: '/two', name: 'two' });
+      db.markStudied('/one', 'main.ts');
+      db.saveQuiz('/one', 'code-reading-basics', 1, 3);
+      db.saveIndex({
+        repository: '/one', indexedFiles: [{ file: 'main.ts', hash: 'hash' }],
+        symbols: [{ file: 'main.ts', line: 1, name: 'App', kind: 'class' }],
+        skipped: 0, indexedAt: new Date().toISOString()
+      });
+      db.removeRepository('/one');
+      expect(db.hasRepository('/one')).toBe(false);
+      expect(db.listRepositories()).toEqual([{ path: '/two', name: 'two' }]);
+      expect(db.getIndexSummary('/one').symbols).toBe(0);
+      expect(db.getProgress('/one').quizResults).toHaveLength(0);
+      expect(() => db.removeRepository('/one')).toThrow('Repository has not been imported.');
+      db.close();
+    } finally { rmSync(directory, { recursive: true, force: true }); }
+  });
+
   it('persists searchable symbols and atomically replaces an index', () => {
     const directory = mkdtempSync(path.join(os.tmpdir(), 'studyrepo-symbol-db-'));
     const filename = path.join(directory, 'db.sqlite');

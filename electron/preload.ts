@@ -4,6 +4,8 @@ import type { StudyRepoAPI } from '../src/shared/types';
 const api: StudyRepoAPI = {
   listRepositories: () => ipcRenderer.invoke('repositories:list'),
   importRepository: () => ipcRenderer.invoke('repositories:import'),
+  removeRepository: (root) => ipcRenderer.invoke('repositories:remove', root),
+  askTutor: (request) => ipcRenderer.invoke('tutor:ask', request),
   scanRepository: (root) => ipcRenderer.invoke('repositories:scan', root),
   readFile: (root, file) => ipcRenderer.invoke('files:read', root, file),
   markStudied: (root, file) => ipcRenderer.invoke('files:studied', root, file),
