@@ -366,3 +366,26 @@ input { accent-color: #8270e4; }
 .tutor-rich-text math { max-width: 100%; font-size: 1.15em; }
 .tutor-rich-text math[display="block"] { overflow-x: auto; margin: 12px 0; }
 @media (min-width: 1200px) { .tutor-panel { flex-basis: clamp(290px, 30vw, 440px); width: clamp(290px, 30vw, 440px); } }
+
+/* Keep one Tutor component mounted while navigating desktop workspace tabs.
+   The editor reserves space; Overview/Settings do not. */
+.app > main { position: relative; }
+.app > main > .workspace-with-tutor { padding-right: clamp(290px, 30vw, 440px); }
+.app > main > .tutor-panel {
+  position: absolute;
+  right: 0;
+  top: 58px;
+  bottom: 0;
+  z-index: 2;
+  width: clamp(290px, 30vw, 440px);
+  min-width: 0;
+  height: auto;
+}
+@media (max-width: 1199px) {
+  .app > main > .workspace-with-tutor { padding-right: 225px; }
+  .app > main > .tutor-panel { width: 225px; }
+}
+@media (max-width: 760px) {
+  .app > main > .workspace-with-tutor { padding-right: 0; }
+  .app > main > .tutor-panel { width: min(300px, 65vw); }
+}
