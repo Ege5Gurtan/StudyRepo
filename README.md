@@ -17,7 +17,10 @@ StudyRepo is envisioned as a companion to your IDE, not a replacement for it. It
 - Import and reopen local folders, browse a collapsible tree, and view UTF-8 source in a read-only Monaco editor with tabs.
 - See extension-based language counts, file counts, recently opened files, and file-based learning progress.
 - Request a clearly labeled mock explanation for selected lines; no code is sent to an AI service.
-- Complete a sample quiz and keep quiz attempts and studied files in a local SQLite database.
+- Use a unified repository-first navigation: Overview, Explorer, Learn, Practice, Progress, and Settings.
+- In Practice, edit a sample Unreal C++ exercise in Monaco and run clearly labeled pattern checks (not a C++ compiler).
+- Show or hide a shared mock Tutor panel in Explorer, Learn, and Practice. The tutor uses example responses and does not call an AI model.
+- Complete a sample quiz in Learn and keep quiz attempts and studied files in a local SQLite database.
 - Use a dark or light theme and resize the explorer panel.
 
 ## Planned capabilities
@@ -86,7 +89,7 @@ This produces local application assets in `dist/` and `dist-electron/`; it does 
 - Local repositories only; no GitHub integration or account is required.
 - Repository analysis is read-only and ignores common generated directories and symbolic links. Files must be UTF-8 text and no larger than 2 MB. Unreadable files and directories are reported or skipped.
 - Language detection is based on file extensions. File progress means a file was opened, not that its contents were mastered; deleted files can remain in history.
-- The AI provider is a placeholder, not a model. The quiz and learning module are generic examples, not generated from the repository. No code execution engine is included.
+- The AI provider is a placeholder, not a model. The quiz and sample Practice exercise are generic examples, not generated from the repository. Practice checks are text-pattern checks only; no code execution engine or C++ compiler is included.
 - SQLite data is stored in Electron's user-data directory, outside imported repositories. There is currently no data export, repository removal, migration UI, or installer.
 
 ## Roadmap
