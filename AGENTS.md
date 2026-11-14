@@ -19,8 +19,8 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 ## Unified desktop UI
 
 - The Electron renderer under `src/` is the sole application shell. `prototypes/practice/` remains historical reference material, not a second navigation or production entry point.
-- `src/components/PracticeWorkspace.tsx` contains the clearly labeled demo-only Monaco exercise and pattern checks; `src/components/TutorPanel.tsx` is the shared mock tutor across Explorer, Learn, and Practice.
-- Navigation is repository-first: Overview, Explorer, Learn, Practice, Progress, Settings. Keep imported source read-only, and distinguish generic sample activities from repository-generated learning.
+- `src/components/PracticeWorkspace.tsx` contains the clearly labeled demo-only Monaco exercise and pattern checks; `src/components/TutorPanel.tsx` is a real OpenAI-backed tutor used in Explorer and Practice.
+- Navigation is repository-first: Overview, Explorer, Practice, Settings. Keep imported source read-only, and distinguish generic sample activities from repository-generated learning.
 
 ## Repository intelligence v1
 
@@ -29,3 +29,10 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - `electron/database.ts` saves each successful index in one transaction; symbol records and source hashes live in SQLite. `src/components/SymbolExplorer.tsx` provides search and source navigation in the Explorer file panel.
 - Indexing is explicitly initiated by the user. Respect scanner symlink/exclusion rules and keep indexed files read-only. Limits: 1500 files, 256 KiB per file, 20000 symbols.
 - Keep new index tests in `tests/intelligence.test.ts` and persistence tests in `tests/database.test.ts`.
+
+## Practice-first AI and safe removal
+
+- `electron/tutor.ts` performs OpenAI Responses requests only in the Electron main process; access API keys from environment only. Validate and bound all context and history arriving through `tutor:ask`. Use `store: false` and do not include arbitrary files from the imported repository.
+- `src/components/TutorPanel.tsx` shows genuine responses and error states; never claim C++ pattern checks are compiler results. AI context is current code plus recent conversation, not the whole repository.
+- `repositories:remove` removes only application SQLite records in one transaction after the user confirms; it never deletes repository files. Keep existing records of other repositories intact.
+- Preserve the pre-existing database tables for backward compatibility even though the Progress and Learn screens are removed.
