@@ -123,6 +123,17 @@ export interface LearningArchive {
   activeIndex: number;
   messages: TutorMessage[];
 }
+export interface LearningConversation {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  archive: LearningArchive;
+}
+export interface ConversationStore {
+  conversations: LearningConversation[];
+  activeId: string | null;
+}
 export interface StudyRepoAPI {
   listRepositories(): Promise<Repository[]>;
   importRepository(): Promise<Repository | null>;
@@ -132,6 +143,8 @@ export interface StudyRepoAPI {
   evaluateSolution(request: LearningEvaluateRequest): Promise<LearningEvaluation>;
   loadLearningArchive(repository: string): Promise<LearningArchive>;
   saveLearningArchive(repository: string, archive: LearningArchive): Promise<void>;
+  loadConversations(repository: string): Promise<ConversationStore>;
+  saveConversations(repository: string, store: ConversationStore): Promise<void>;
   scanRepository(path: string): Promise<ScanResult>;
   readFile(repository: string, path: string): Promise<string>;
   markStudied(repository: string, path: string): Promise<void>;
