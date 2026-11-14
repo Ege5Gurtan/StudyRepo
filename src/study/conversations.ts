@@ -25,6 +25,11 @@ export function changeConversationArchive(store: ConversationStore, update: (arc
     conversation.id === store.activeId ? { ...conversation, archive: update(conversation.archive), updatedAt: new Date().toISOString() } : conversation) };
 }
 
+export function updateConversationById(store: ConversationStore, id: string, update: (archive: LearningArchive) => LearningArchive): ConversationStore {
+  return { ...store, conversations: store.conversations.map(conversation =>
+    conversation.id === id ? { ...conversation, archive: update(conversation.archive), updatedAt: new Date().toISOString() } : conversation) };
+}
+
 export function titleConversationIfNew(store: ConversationStore, prompt: string): ConversationStore {
   return { ...store, conversations: store.conversations.map(item =>
     item.id === store.activeId && item.title === 'New conversation'
