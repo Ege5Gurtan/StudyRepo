@@ -1,6 +1,16 @@
 # StudyRepo
 
+**Understand the code you work with.**
+
 StudyRepo is a local-first desktop application for learning by studying your own code. Explore a repository, build familiarity with its files, and practice code-reading fundamentals without an AI account.
+
+> **Mission:** Make it easier to understand *why* a codebase works, not just *what* the code says.
+
+## The idea
+
+Developers often work with code they did not write themselves, including open-source projects, inherited systems, team contributions, and AI-generated implementations. StudyRepo aims to help them find a starting point, understand how a codebase fits together, and check their understanding before making changes.
+
+StudyRepo is envisioned as a companion to your IDE, not a replacement for it. Its longer-term direction includes guided explanations, code exploration, and hands-on exercises grounded in the repository being studied.
 
 ## Features
 
@@ -9,6 +19,31 @@ StudyRepo is a local-first desktop application for learning by studying your own
 - Request a clearly labeled mock explanation for selected lines; no code is sent to an AI service.
 - Complete a sample quiz and keep quiz attempts and studied files in a local SQLite database.
 - Use a dark or light theme and resize the explorer panel.
+
+## Planned capabilities
+
+The following describe the product vision, not features already implemented.
+
+| Area | What StudyRepo aims to offer |
+| --- | --- |
+| Repository explorer | Navigate source files and understand project structure. |
+| Integrated code viewer | Read code with syntax highlighting and contextual explanations. |
+| AI code tutor | Ask questions about functions, classes, files, and design decisions. |
+| Codebase map | Visualize relationships between modules, files, and important components. |
+| Learning paths | Follow a suggested sequence from foundational concepts to advanced ones. |
+| Language and framework lessons | Learn syntax and concepts using examples from the selected repository. |
+| Interactive exercises | Write or modify small pieces of code and receive feedback. |
+| Quizzes and review | Test comprehension and revisit difficult concepts. |
+| Learning progress | Track which parts of a repository and which concepts you have studied. |
+
+## Design principles
+
+1. **Codebase-first learning.** Teach concepts using real code from the project being studied.
+2. **Learn by doing.** Prefer active practice and comprehension checks over passive explanations alone.
+3. **Explain progressively.** Start with approachable concepts and reveal complexity as needed.
+4. **Keep the developer in control.** Help users reason about code rather than blindly accept generated changes.
+5. **Desktop-first experience.** Prioritize a comfortable workspace for extended code reading and study.
+6. **Open source.** Build in public and make it possible for others to contribute.
 
 ## Technology
 
@@ -56,4 +91,16 @@ This produces local application assets in `dist/` and `dist-electron/`; it does 
 
 ## Roadmap
 
-Future work could add real provider integrations, repository-aware explanations and quizzes, architecture visualization, richer learning activities, and packaged releases.
+Future work could add real provider integrations, repository-aware explanations and quizzes, architecture visualization, richer learning activities, and packaged releases. Priorities and implementation choices may change as the project evolves.
+
+## Contributing
+
+Contributions, feedback, ideas, and issue reports are welcome. Propose a focused change or feature, and open an issue or pull request describing its motivation and approach.
+
+## License
+
+A license has not yet been specified. An explicit license will be added before public reuse and redistribution are encouraged. Until then, standard copyright restrictions apply.
+
+---
+
+**StudyRepo — don't just generate code. Understand it.**
