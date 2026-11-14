@@ -64,3 +64,9 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - `electron/database.ts` keeps the multi-conversation JSON store in `conversation_stores` with restricted `conversations:get/save` IPC; it automatically migrates the old `learning_archives` row to one conversation without deleting its original data.
 - Switching chats changes the active ID and invalidates pending lesson/evaluation results. Scope asynchronous chat callbacks to a stable conversation ID, and keep active edits and stored messages isolated.
 - **New chat** makes a separate empty conversation, rather than clearing the prior conversation. Renaming and deleting operate only on the selected conversation. Never delete repository source files.
+
+## Structured chat-to-challenge orchestration
+
+- `electron/tutor-actions.ts` requests the restricted OpenAI `generate_challenge` function in Practice. Model text remains a normal answer; validated tool calls are executed by application code, never by model-authored code.
+- A call with `scope=single` uses focused learning mode to create one repository-derived exercise. `scope=set` creates the first exercise of another short learning set. Both use the existing conversation archive and stale-response guards.
+- Tool calls must not permit arbitrary filesystem writes, execution, or unvalidated action names. Maintain regression tests for challenge actions and normal tutor replies.
