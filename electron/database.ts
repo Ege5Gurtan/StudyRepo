@@ -1,7 +1,8 @@
 import { DatabaseSync } from 'node:sqlite';
-import type { CodeSymbol, IndexSummary, LearningArchive, Progress, QuizResult, Repository, RepositoryIndex } from '../src/shared/types';
+import type { CodeSymbol, ConversationStore, IndexSummary, LearningArchive, Progress, QuizResult, Repository, RepositoryIndex } from '../src/shared/types';
 
 import { emptyArchive, validateArchive } from '../src/study/history';
+import { emptyConversations, migrateLegacyArchive, validateConversationStore } from '../src/study/conversations';
 
 export class Database {
   private db: DatabaseSync;
@@ -17,6 +18,7 @@ export class Database {
       CREATE TABLE IF NOT EXISTS index_files (repository TEXT NOT NULL REFERENCES repositories(path), file TEXT NOT NULL, hash TEXT NOT NULL, PRIMARY KEY(repository, file));
       CREATE TABLE IF NOT EXISTS index_status (repository TEXT PRIMARY KEY REFERENCES repositories(path), indexed_at TEXT NOT NULL, skipped INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS learning_archives (repository TEXT PRIMARY KEY REFERENCES repositories(path), archive_json TEXT NOT NULL, updated_at TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS conversation_stores (repository TEXT PRIMARY KEY REFERENCES repositories(path), store_json TEXT NOT NULL, updated_at TEXT NOT NULL);
     `);
   }
   addRepository(repo: Repository): void {
@@ -26,6 +28,7 @@ export class Database {
     if (!this.hasRepository(root)) throw new Error('Repository has not been imported.');
     this.db.exec('BEGIN IMMEDIATE');
     try {
+      this.db.prepare('DELETE FROM conversation_stores WHERE repository = ?').run(root);
       this.db.prepare('DELETE FROM learning_archives WHERE repository = ?').run(root);
       this.db.prepare('DELETE FROM code_symbols WHERE repository = ?').run(root);
       this.db.prepare('DELETE FROM index_files WHERE repository = ?').run(root);
@@ -99,6 +102,23 @@ export class Database {
     const serialized = JSON.stringify(archive);
     if (serialized.length > 30_000_000) throw new Error('Learning archive exceeds local storage limit.');
     this.db.prepare('INSERT INTO learning_archives(repository, archive_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(repository) DO UPDATE SET archive_json=excluded.archive_json, updated_at=excluded.updated_at').run(root, serialized, new Date().toISOString());
+  }
+  loadConversations(root: string): ConversationStore {
+    const saved = this.db.prepare('SELECT store_json AS json FROM conversation_stores WHERE repository = ?').get(root) as { json: string } | undefined;
+    if (saved) return validateConversationStore(JSON.parse(saved.json) as unknown);
+    // Migrate without altering or deleting the old archive; no data loss if migration is interrupted.
+    const legacy = this.db.prepare('SELECT archive_json AS json FROM learning_archives WHERE repository = ?').get(root) as { json: string } | undefined;
+    if (!legacy) return emptyConversations();
+    const migrated = migrateLegacyArchive(JSON.parse(legacy.json) as unknown);
+    this.saveConversations(root, migrated);
+    return migrated;
+  }
+  saveConversations(root: string, value: unknown): void {
+    if (!this.hasRepository(root)) throw new Error('Repository has not been imported.');
+    const store = validateConversationStore(value);
+    const serialized = JSON.stringify(store);
+    if (serialized.length > 40_000_000) throw new Error('Conversation storage limit reached.');
+    this.db.prepare('INSERT INTO conversation_stores(repository, store_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(repository) DO UPDATE SET store_json=excluded.store_json, updated_at=excluded.updated_at').run(root, serialized, new Date().toISOString());
   }
   close(): void { this.db.close(); }
 }
