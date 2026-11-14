@@ -13,11 +13,13 @@ export function validateTutorRequest(value: unknown): TutorRequest {
   }
   if (request.context !== 'Practice' && request.context !== 'Explorer') throw new Error('Invalid tutor context.');
   if (typeof request.code !== 'string' || request.code.length > MAX_CODE) throw new Error('Code context is too large.');
-  if (typeof request.repository !== 'string' || request.repository.length > 250) throw new Error('Invalid repository context.');
+  if (typeof request.repository !== 'string' || request.repository.length > 2048) throw new Error('Invalid repository context.');
   if (!Array.isArray(request.history) || request.history.length > MAX_HISTORY) throw new Error('Too many chat messages.');
   if (!request.history.every((m): m is TutorMessage =>
     !!m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.length <= MAX_MESSAGE
   )) throw new Error('Invalid chat history.');
+  if (request.sourceFile !== undefined && (typeof request.sourceFile !== 'string' || request.sourceFile.length > 512)) throw new Error('Invalid source file.');
+  if (request.diagnostics !== undefined && (!Array.isArray(request.diagnostics) || request.diagnostics.length > 20 || !request.diagnostics.every(d => typeof d === 'string' && d.length <= 500))) throw new Error('Invalid diagnostics.');
   return request as TutorRequest;
 }
 
