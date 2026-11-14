@@ -6,11 +6,12 @@ import JsonWorker from 'monaco-editor/language/json/json.worker.js?worker';
 import CssWorker from 'monaco-editor/language/css/css.worker.js?worker';
 import HtmlWorker from 'monaco-editor/language/html/html.worker.js?worker';
 import TsWorker from 'monaco-editor/language/typescript/ts.worker.js?worker';
-import type { IndexSummary, LearningEvaluation, LearningSession, Repository, ScanResult, TutorMessage } from './shared/types';
+import type { IndexSummary, LearningArchive, Repository, ScanResult } from './shared/types';
 import { FileTree } from './components/FileTree';
 import { SymbolExplorer } from './components/SymbolExplorer';
 import { LearningWorkspace } from './components/LearningWorkspace';
 import { TutorPanel } from './components/TutorPanel';
+import { addChallenge, changeChallengeCode, emptyArchive, recordEvaluation, selectChallenge, setChatMessages, skipChallenge } from './study/history';
 
 self.MonacoEnvironment = {
   getWorker(_workerId, label) {
@@ -40,10 +41,9 @@ export default function App() {
   const [error, setError] = useState('');
   const [theme, setTheme] = useState<'dark' | 'light'>(() => localStorage.getItem('theme') === 'light' ? 'light' : 'dark');
   const [tutorVisible, setTutorVisible] = useState(true);
-  const [learning, setLearning] = useState<LearningSession | null>(null);
-  const [learningMessages, setLearningMessages] = useState<TutorMessage[]>([]);
-  const [practiceCode, setPracticeCode] = useState('');
-  const [evaluation, setEvaluation] = useState<LearningEvaluation | null>(null);
+  const [archive, setArchive] = useState<LearningArchive>(emptyArchive);
+  const [archiveReady, setArchiveReady] = useState(false);
+  const [awaitingGoal, setAwaitingGoal] = useState(true);
   const [learningBusy, setLearningBusy] = useState(false);
   const [learningError, setLearningError] = useState('');
   const [selection, setSelection] = useState({ startLine: 1, endLine: 1, code: '' });
@@ -55,11 +55,12 @@ export default function App() {
 
   async function loadRepository(repo: Repository) {
     const epoch = ++learningEpoch.current;
+    setArchiveReady(false);
     try {
       setError('');
-      const [nextScan, nextIndex] = await Promise.all([window.studyRepo.scanRepository(repo.path), window.studyRepo.getIndexSummary(repo.path)]);
+      const [nextScan, nextIndex, saved] = await Promise.all([window.studyRepo.scanRepository(repo.path), window.studyRepo.getIndexSummary(repo.path), window.studyRepo.loadLearningArchive(repo.path)]);
       if (epoch !== learningEpoch.current) return;
-      setLearningBusy(false); setScan(nextScan); setIndexSummary(nextIndex); setJump(null); setTabs([]); setActive(''); setPage('Practice'); setLearning(null); setLearningMessages([]); setPracticeCode(''); setEvaluation(null); setLearningError('');
+      setLearningBusy(false); setArchive(saved); setArchiveReady(true); setAwaitingGoal(saved.entries.length === 0); setScan(nextScan); setIndexSummary(nextIndex); setJump(null); setTabs([]); setActive(''); setPage('Practice'); setLearningError('');
     } catch (e) { if (epoch === learningEpoch.current) setError(String(e)); }
   }
   async function importRepository() {
@@ -94,51 +95,90 @@ export default function App() {
       setRepositories(await window.studyRepo.listRepositories());
       if (scan?.repository.path === repo.path) {
         learningEpoch.current++;
-        setLearningBusy(false); setScan(null); setTabs([]); setActive(''); setIndexSummary(null); setJump(null); setLearning(null); setLearningMessages([]); setPracticeCode(''); setEvaluation(null);
+        setLearningBusy(false); setScan(null); setTabs([]); setActive(''); setIndexSummary(null); setJump(null); setArchive(emptyArchive()); setArchiveReady(false); setAwaitingGoal(true);
         setPage('Overview');
       }
     } catch (e) { setError(String(e)); }
   }
+  const activeEntry = archive.entries[archive.activeIndex];
+  const learning = awaitingGoal ? null : activeEntry?.session ?? null;
+  const practiceCode = awaitingGoal ? '' : activeEntry?.code ?? '';
+  const evaluation = activeEntry?.attempts.at(-1)?.evaluation ?? null;
+  const evaluationCode = activeEntry?.attempts.at(-1)?.code ?? null;
+
+  useEffect(() => {
+    if (!archiveReady || !scan) return;
+    const root = scan.repository.path;
+    const timer = setTimeout(() => {
+      window.studyRepo.saveLearningArchive(root, archive).catch(e => setLearningError(String(e)));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [archive, archiveReady, scan?.repository.path]);
+
   async function startLearning(goal: string): Promise<string> {
-    if (!scan) throw new Error('Import a repository first.');
+    if (!scan || !archiveReady) throw new Error('Import a repository first.');
     const epoch = learningEpoch.current;
     setLearningBusy(true); setLearningError('');
     try {
       const session = await window.studyRepo.generateLesson({ repository: scan.repository.path, goal, mode: 'start' });
       if (epoch !== learningEpoch.current) throw new Error('Repository changed; learning request cancelled.');
-      setLearning(session); setPracticeCode(session.lesson.challenge.starterCode); setEvaluation(null);
-      return session.lesson.introduction + '\n\n' + session.lesson.explanation;
+      setArchive(old => addChallenge(old, session));
+      setAwaitingGoal(false);
+      return session.lesson.introduction + '\\n\\n' + session.lesson.explanation;
     } catch (e) { if (epoch === learningEpoch.current) setLearningError(String(e)); throw e; }
     finally { if (epoch === learningEpoch.current) setLearningBusy(false); }
   }
   async function evaluateCode() {
-    if (!scan || !learning) return;
+    if (!scan || !activeEntry || !archiveReady) return;
     const epoch = learningEpoch.current;
+    const id = activeEntry.id;
+    const submittedCode = activeEntry.code;
     setLearningBusy(true); setLearningError('');
     try {
-      const result = await window.studyRepo.evaluateSolution({ repository: scan.repository.path, lesson: learning.lesson, code: practiceCode });
-      if (epoch === learningEpoch.current) setEvaluation(result);
+      const result = await window.studyRepo.evaluateSolution({ repository: scan.repository.path, lesson: activeEntry.session.lesson, code: submittedCode });
+      if (epoch === learningEpoch.current) {
+        setArchive(old => old.entries[old.activeIndex]?.id === id
+          ? recordEvaluation(old, result)
+          : old);
+      }
     } catch (e) { if (epoch === learningEpoch.current) setLearningError(String(e)); }
     finally { if (epoch === learningEpoch.current) setLearningBusy(false); }
   }
-  async function advanceLearning(mode: 'next' | 'similar') {
-    if (!scan || !learning) return;
+  async function advanceLearning(mode: 'next' | 'similar', skip = false) {
+    if (!scan || !activeEntry || !archiveReady) return;
+    if (archive.activeIndex !== archive.entries.length - 1) return;
+    if (archive.entries.length >= 100) { setLearningError('History limit of 100 challenges reached.'); return; }
     const epoch = learningEpoch.current;
+    const currentEntry = activeEntry;
+    const currentSession = currentEntry.session;
+    const newIndex = mode === 'next' ? currentSession.topicIndex + 1 : currentSession.topicIndex;
+    if (newIndex >= currentSession.topics.length) { setLearningError('This is the last topic. Request another similar challenge or start a new learning goal.'); return; }
     setLearningBusy(true); setLearningError('');
     try {
-      const nextIndex = mode === 'next' ? Math.min(learning.topicIndex + 1, learning.topics.length - 1) : learning.topicIndex;
       const session = await window.studyRepo.generateLesson({
-        repository: scan.repository.path, goal: learning.goal, mode: mode === 'next' && nextIndex === learning.topicIndex ? 'similar' : mode,
-        topics: learning.topics, topicIndex: nextIndex, previousChallenge: learning.lesson.challenge
+        repository: scan.repository.path, goal: currentSession.goal,
+        mode, topics: currentSession.topics, topicIndex: newIndex,
+        previousChallenge: currentSession.lesson.challenge
       });
-      if (epoch === learningEpoch.current) { setLearning(session); setPracticeCode(session.lesson.challenge.starterCode); setEvaluation(null); }
+      if (epoch === learningEpoch.current) {
+        setArchive(old => {
+          if (old.entries[old.activeIndex]?.id !== currentEntry.id) return old;
+          return addChallenge(skip ? skipChallenge(old) : old, session);
+        });
+      }
     } catch (e) { if (epoch === learningEpoch.current) setLearningError(String(e)); }
     finally { if (epoch === learningEpoch.current) setLearningBusy(false); }
+  }
+  function navigateHistory(index: number) {
+    if (learningBusy) return;
+    setArchive(old => selectChallenge(old, index));
+    setAwaitingGoal(false);
+    setLearningError('');
   }
   const tutorLearningCode = learning
-    ? ('Current topic: ' + learning.topics[learning.topicIndex]?.title + '\nChallenge: ' + learning.lesson.challenge.description +
-       '\nCriteria: ' + learning.lesson.challenge.criteria.join('; ') + '\nRelevant source excerpts:\n' +
-       learning.sourceContext + '\nStudent scratchpad:\n' + practiceCode).slice(0, 12000)
+    ? ('Current topic: ' + learning.topics[learning.topicIndex]?.title + '\\nChallenge: ' + learning.lesson.challenge.description +
+       '\\nCriteria: ' + learning.lesson.challenge.criteria.join('; ') + '\\nRelevant source excerpts:\\n' +
+       learning.sourceContext + '\\nStudent scratchpad:\\n' + practiceCode).slice(0, 12000)
     : '';
   const current = tabs.find(tab => tab.path === active);
 
@@ -163,7 +203,7 @@ export default function App() {
         <div className="card modules"><div><h2>Browse source code</h2><p className="muted">Find source files and symbols in the imported repository. {indexSummary?.indexedAt ? `${indexSummary.symbols} symbols indexed.` : 'Source index not built yet.'}</p></div><button onClick={() => setPage('Explorer')}>Open Explorer →</button></div>
       </section> :
       scan && page === 'Explorer' ? <div className="workspace-with-tutor"><div className="explorer"><div className="file-panel"><div className="panel-title">EXPLORER <span>{scan.fileCount} files</span></div><div className="repo-heading">▾ {scan.repository.name}</div><FileTree nodes={scan.tree} open={file => { void openFile(file); }}/><SymbolExplorer repository={scan.repository.path} summary={indexSummary} onIndexed={setIndexSummary} onOpen={(file, line) => { void openFile(file, line); }}/></div><div className="editor-area"><div className="tabs">{tabs.map(tab => <div className={`tab ${active === tab.path ? 'active-tab' : ''}`} key={tab.path}><button title={tab.path} onClick={() => { setActive(tab.path); setSelection({ startLine: 1, endLine: 1, code: '' }); }}>{tab.path.split(/[\\\\/]/).pop()}</button><button aria-label={`Close ${tab.path}`} onClick={() => { const rest = tabs.filter(t => t.path !== tab.path); setTabs(rest); if (active === tab.path) setActive(rest.at(-1)?.path ?? ''); }}>×</button></div>)}</div>{current ? <Editor path={current.path} value={current.content} theme={theme === 'dark' ? 'vs-dark' : 'light'} options={{ readOnly: true, minimap: { enabled: false }, fontSize: 13, scrollBeyondLastLine: false, automaticLayout: true }} onMount={editor => { explorerEditor.current = editor; if (jump && jump.file === active) { editor.revealLineInCenter(jump.line); editor.setPosition({ lineNumber: jump.line, column: 1 }); } editor.onDidChangeCursorSelection(event => { const range = event.selection; setSelection({ startLine: range.startLineNumber, endLine: range.endLineNumber, code: editor.getModel()?.getValueInRange(range) ?? '' }); }); }} /> : <div className="editor-empty">Select a file to explore</div>}</div></div><TutorPanel hidden={!tutorVisible} key={scan.repository.path + ':explorer'} repository={scan.repository.path} context="Explorer" sourceFile={current?.path} code={selection.code || current?.content.slice(0, 12000) || ''}/></div> :
-      scan && page === 'Practice' ? <div className="workspace-with-tutor"><LearningWorkspace session={learning} code={practiceCode} onCodeChange={value => { setPracticeCode(value); setEvaluation(null); }} evaluation={evaluation} busy={learningBusy} error={learningError} onEvaluate={() => { void evaluateCode(); }} onRestart={() => { learningEpoch.current++; setLearningBusy(false); setLearning(null); setLearningMessages([]); setPracticeCode(''); setEvaluation(null); setLearningError(''); }} onAdvance={mode => { void advanceLearning(mode); }} onOpenSource={(file, line) => { void openFile(file, line); }}/><TutorPanel hidden={!tutorVisible} key={scan.repository.path + ":practice"} repository={scan.repository.path} context="Practice" code={tutorLearningCode} learningStarted={!!learning} onStartLearning={startLearning} messages={learningMessages} onMessagesChange={setLearningMessages}/></div> :
+      scan && page === 'Practice' ? <div className="workspace-with-tutor"><LearningWorkspace session={learning} challengeId={activeEntry?.id ?? ''} code={practiceCode} onCodeChange={value => setArchive(old => changeChallengeCode(old, value))} evaluation={evaluationCode === practiceCode ? evaluation : null} attempts={activeEntry?.attempts ?? []} entries={archive.entries} activeIndex={archive.activeIndex} busy={learningBusy || !archiveReady} error={learningError} onEvaluate={() => { void evaluateCode(); }} onRestart={() => { learningEpoch.current++; setLearningBusy(false); setAwaitingGoal(true); setArchive(old => setChatMessages(old, [])); setLearningError(''); }} onAdvance={mode => { void advanceLearning(mode); }} onSkip={() => { void advanceLearning('next', true); }} onNavigate={navigateHistory} onRestoreAttempt={index => { const attempt = activeEntry?.attempts[index]; if (attempt) setArchive(old => changeChallengeCode(old, attempt.code)); }} onOpenSource={(file, line) => { void openFile(file, line); }}/><TutorPanel hidden={!tutorVisible} key={scan.repository.path + ":practice"} repository={scan.repository.path} context="Practice" code={tutorLearningCode} learningStarted={!!learning} onStartLearning={startLearning} messages={archive.messages} onMessagesChange={messages => setArchive(old => setChatMessages(old, messages))}/></div> :
       null}
 
     </main>
