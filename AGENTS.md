@@ -15,3 +15,9 @@ Use TypeScript, small modules, and explicit typed interfaces across process boun
 ## Verification
 
 For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and `npm run build`. Add focused tests for new behavior and security boundaries. Do not commit generated output, dependencies, secrets, or local user data.
+
+## Unified desktop UI
+
+- The Electron renderer under `src/` is the sole application shell. `prototypes/practice/` remains historical reference material, not a second navigation or production entry point.
+- `src/components/PracticeWorkspace.tsx` contains the clearly labeled demo-only Monaco exercise and pattern checks; `src/components/TutorPanel.tsx` is the shared mock tutor across Explorer, Learn, and Practice.
+- Navigation is repository-first: Overview, Explorer, Learn, Practice, Progress, Settings. Keep imported source read-only, and distinguish generic sample activities from repository-generated learning.
