@@ -47,6 +47,30 @@ describe('adaptive learning', () => {
     expect(result.lesson.challenge.language).toBe('javascript');
   });
 
+  it('extends completed plans by replacing the short topic batch and resetting its index', () => {
+    const prior = [
+      { id: 'state', title: 'React state', objective: 'Use state safely' },
+      { id: 'arrays', title: 'Arrays', objective: 'Transform arrays' },
+      { id: 'loops', title: 'Loops', objective: 'Iterate' }
+    ];
+    const request = validateGenerateRequest({
+      repository: '/repo', goal: 'learn JavaScript', mode: 'extend', topics: prior,
+      topicIndex: 2, focus: 'Give me another set of challenges.'
+    });
+    const next = {
+      ...lesson,
+      topics: [
+        { id: 'objects', title: 'Objects', objective: 'Understand object copying' },
+        { id: 'functions', title: 'Closures', objective: 'Understand callbacks' }
+      ]
+    };
+    const result = parseLesson(next, [{ file: 'src/game.js', code: 'function foo() {}\nfoo();', totalLines: 2 }], request);
+    expect(result.topics).toEqual(next.topics);
+    expect(result.topicIndex).toBe(0);
+    expect(result.lesson.challenge.title).toBe('Double');
+    expect(() => validateGenerateRequest({ ...request, focus: 'x'.repeat(1501) })).toThrow();
+  });
+
   it('validates evaluation evidence and avoids equating unsupported status with success', () => {
     expect(validateEvaluation({ status: 'unable_to_verify', feedback: 'Requires execution.', criteria: [] }).status).toBe('unable_to_verify');
     expect(() => validateEvaluation({ status: 'compiled', feedback: 'Everything works.', criteria: [] })).toThrow();

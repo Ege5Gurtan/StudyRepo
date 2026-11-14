@@ -148,30 +148,41 @@ export default function App() {
     } catch (e) { if (epoch === learningEpoch.current) setLearningError(String(e)); }
     finally { if (epoch === learningEpoch.current) setLearningBusy(false); }
   }
-  async function advanceLearning(mode: 'next' | 'similar', skip = false) {
-    if (!scan || !activeEntry || !archiveReady) return;
-    if (archive.activeIndex !== archive.entries.length - 1) return;
-    if (archive.entries.length >= 100) { setLearningError('History limit of 100 challenges reached.'); return; }
+  async function advanceLearning(mode: 'next' | 'similar' | 'extend', skip = false, focus?: string): Promise<string> {
+    if (!scan || !activeEntry || !archiveReady) throw new Error('Import a repository and start learning first.');
+    if (archive.activeIndex !== archive.entries.length - 1 && !focus) throw new Error('Open your latest challenge before advancing.');
     const epoch = learningEpoch.current;
     const currentEntry = activeEntry;
     const currentSession = currentEntry.session;
-    const newIndex = mode === 'next' ? currentSession.topicIndex + 1 : currentSession.topicIndex;
-    if (newIndex >= currentSession.topics.length) { setLearningError('This is the last topic. Request another similar challenge or start a new learning goal.'); return; }
+    const index = mode === 'next' ? currentSession.topicIndex + 1 : currentSession.topicIndex;
+    // A plan is only a short batch. After its final topic, generate a new plan.
+    const extend = mode === 'extend' || (mode === 'next' && index >= currentSession.topics.length);
     setLearningBusy(true); setLearningError('');
     try {
       const session = await window.studyRepo.generateLesson({
         repository: scan.repository.path, goal: currentSession.goal,
-        mode, topics: currentSession.topics, topicIndex: newIndex,
-        previousChallenge: currentSession.lesson.challenge
+        mode: extend ? 'extend' : mode,
+        topics: currentSession.topics,
+        topicIndex: extend ? currentSession.topicIndex : index,
+        previousChallenge: currentSession.lesson.challenge,
+        focus: focus?.slice(0, 1500)
       });
-      if (epoch === learningEpoch.current) {
-        setArchive(old => {
-          if (old.entries[old.activeIndex]?.id !== currentEntry.id) return old;
-          return addChallenge(skip ? skipChallenge(old) : old, session);
-        });
-      }
-    } catch (e) { if (epoch === learningEpoch.current) setLearningError(String(e)); }
-    finally { if (epoch === learningEpoch.current) setLearningBusy(false); }
+      if (epoch !== learningEpoch.current) throw new Error('Repository changed; new challenge request cancelled.');
+      setArchive(old => {
+        if (old.entries[old.activeIndex]?.id !== currentEntry.id) return old;
+        return addChallenge(skip ? skipChallenge(old) : old, session);
+      });
+      return extend
+        ? 'I created a new learning set with ' + session.topics.length + ' topics. The first challenge, "' + session.lesson.challenge.title + '", is now in your code workspace. The rest will be generated as you continue.'
+        : 'Your next challenge, "' + session.lesson.challenge.title + '", is now in the code workspace.';
+    } catch (e) {
+      if (epoch === learningEpoch.current) setLearningError(String(e));
+      throw e;
+    } finally { if (epoch === learningEpoch.current) setLearningBusy(false); }
+  }
+  async function generateChallengesFromChat(request: string): Promise<string> {
+    // A natural-language request generates structured app content, not just a text list.
+    return advanceLearning('extend', false, request);
   }
   function navigateHistory(index: number) {
     if (learningBusy) return;
@@ -207,7 +218,7 @@ export default function App() {
         <div className="card modules"><div><h2>Browse source code</h2><p className="muted">Find source files and symbols in the imported repository. {indexSummary?.indexedAt ? `${indexSummary.symbols} symbols indexed.` : 'Source index not built yet.'}</p></div><button onClick={() => setPage('Explorer')}>Open Explorer →</button></div>
       </section> :
       scan && page === 'Explorer' ? <div className="workspace-with-tutor"><div className="explorer"><div className="file-panel"><div className="panel-title">EXPLORER <span>{scan.fileCount} files</span></div><div className="repo-heading">▾ {scan.repository.name}</div><FileTree nodes={scan.tree} open={file => { void openFile(file); }}/><SymbolExplorer repository={scan.repository.path} summary={indexSummary} onIndexed={setIndexSummary} onOpen={(file, line) => { void openFile(file, line); }}/></div><div className="editor-area"><div className="tabs">{tabs.map(tab => <div className={`tab ${active === tab.path ? 'active-tab' : ''}`} key={tab.path}><button title={tab.path} onClick={() => { setActive(tab.path); setSelection({ startLine: 1, endLine: 1, code: '' }); }}>{tab.path.split(/[\\\\/]/).pop()}</button><button aria-label={`Close ${tab.path}`} onClick={() => { const rest = tabs.filter(t => t.path !== tab.path); setTabs(rest); if (active === tab.path) setActive(rest.at(-1)?.path ?? ''); }}>×</button></div>)}</div>{current ? <Editor path={current.path} value={current.content} theme={theme === 'dark' ? 'vs-dark' : 'light'} options={{ readOnly: true, minimap: { enabled: false }, fontSize: 13, scrollBeyondLastLine: false, automaticLayout: true }} onMount={editor => { explorerEditor.current = editor; if (jump && jump.file === active) { editor.revealLineInCenter(jump.line); editor.setPosition({ lineNumber: jump.line, column: 1 }); } editor.onDidChangeCursorSelection(event => { const range = event.selection; setSelection({ startLine: range.startLineNumber, endLine: range.endLineNumber, code: editor.getModel()?.getValueInRange(range) ?? '' }); }); }} /> : <div className="editor-empty">Select a file to explore</div>}</div></div><TutorPanel hidden={!tutorVisible} key={scan.repository.path + ':explorer'} repository={scan.repository.path} context="Explorer" sourceFile={current?.path} code={selection.code || current?.content.slice(0, 12000) || ''}/></div> :
-      scan && page === 'Practice' ? <div className="workspace-with-tutor"><LearningWorkspace session={learning} challengeId={activeEntry?.id ?? ''} code={practiceCode} onCodeChange={value => setArchive(old => changeChallengeCode(old, value))} evaluation={evaluationCode === practiceCode ? evaluation : null} attempts={activeEntry?.attempts ?? []} entries={archive.entries} activeIndex={archive.activeIndex} busy={learningBusy || !archiveReady} error={learningError} onEvaluate={() => { void evaluateCode(); }} onRestart={() => { learningEpoch.current++; setLearningBusy(false); setAwaitingGoal(true); setArchive(old => setChatMessages(old, [])); setLearningError(''); }} onAdvance={mode => { void advanceLearning(mode); }} onSkip={() => { void advanceLearning('next', true); }} onNavigate={navigateHistory} onRestoreAttempt={index => { const attempt = activeEntry?.attempts[index]; if (attempt) setArchive(old => changeChallengeCode(old, attempt.code)); }} onOpenSource={(file, line) => { void openFile(file, line); }}/><TutorPanel hidden={!tutorVisible} key={scan.repository.path + ":practice"} repository={scan.repository.path} context="Practice" code={tutorLearningCode} learningStarted={!!learning} onStartLearning={startLearning} messages={archive.messages} onMessagesChange={messages => setArchive(old => setChatMessages(old, messages))}/></div> :
+      scan && page === 'Practice' ? <div className="workspace-with-tutor"><LearningWorkspace session={learning} challengeId={activeEntry?.id ?? ''} code={practiceCode} onCodeChange={value => setArchive(old => changeChallengeCode(old, value))} evaluation={evaluationCode === practiceCode ? evaluation : null} attempts={activeEntry?.attempts ?? []} entries={archive.entries} activeIndex={archive.activeIndex} busy={learningBusy || !archiveReady} error={learningError} onEvaluate={() => { void evaluateCode(); }} onRestart={() => { learningEpoch.current++; setLearningBusy(false); setAwaitingGoal(true); setArchive(old => setChatMessages(old, [])); setLearningError(''); }} onAdvance={mode => { void advanceLearning(mode).catch(() => {}); }} onSkip={() => { void advanceLearning('next', true).catch(() => {}); }} onNavigate={navigateHistory} onRestoreAttempt={index => { const attempt = activeEntry?.attempts[index]; if (attempt) setArchive(old => changeChallengeCode(old, attempt.code)); }} onOpenSource={(file, line) => { void openFile(file, line); }}/><TutorPanel hidden={!tutorVisible} key={scan.repository.path + ":practice"} repository={scan.repository.path} context="Practice" code={tutorLearningCode} learningStarted={!!learning} onStartLearning={startLearning} onGenerateChallenges={generateChallengesFromChat} messages={archive.messages} onMessagesChange={messages => setArchive(old => setChatMessages(old, messages))}/></div> :
       null}
 
     </main>

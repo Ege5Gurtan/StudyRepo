@@ -94,10 +94,11 @@ export interface LearningEvaluation {
 export interface LearningGenerateRequest {
   repository: string;
   goal: string;
-  mode: 'start' | 'next' | 'similar';
+  mode: 'start' | 'next' | 'similar' | 'extend';
   topics?: LearningTopic[];
   topicIndex?: number;
   previousChallenge?: CodingChallenge;
+  focus?: string;
 }
 export interface LearningEvaluateRequest {
   repository: string;
