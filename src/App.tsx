@@ -6,7 +6,7 @@ import JsonWorker from 'monaco-editor/language/json/json.worker.js?worker';
 import CssWorker from 'monaco-editor/language/css/css.worker.js?worker';
 import HtmlWorker from 'monaco-editor/language/html/html.worker.js?worker';
 import TsWorker from 'monaco-editor/language/typescript/ts.worker.js?worker';
-import type { IndexSummary, LearningEvaluation, LearningSession, Repository, ScanResult } from './shared/types';
+import type { IndexSummary, LearningEvaluation, LearningSession, Repository, ScanResult, TutorMessage } from './shared/types';
 import { FileTree } from './components/FileTree';
 import { SymbolExplorer } from './components/SymbolExplorer';
 import { LearningWorkspace } from './components/LearningWorkspace';
@@ -40,6 +40,7 @@ export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => localStorage.getItem('theme') === 'light' ? 'light' : 'dark');
   const [tutorVisible, setTutorVisible] = useState(true);
   const [learning, setLearning] = useState<LearningSession | null>(null);
+  const [learningMessages, setLearningMessages] = useState<TutorMessage[]>([]);
   const [practiceCode, setPracticeCode] = useState('');
   const [evaluation, setEvaluation] = useState<LearningEvaluation | null>(null);
   const [learningBusy, setLearningBusy] = useState(false);
@@ -55,7 +56,7 @@ export default function App() {
     try {
       setError('');
       const [nextScan, nextIndex] = await Promise.all([window.studyRepo.scanRepository(repo.path), window.studyRepo.getIndexSummary(repo.path)]);
-      setScan(nextScan); setIndexSummary(nextIndex); setJump(null); setTabs([]); setActive(''); setPage('Practice'); setLearning(null); setPracticeCode(''); setEvaluation(null); setLearningError('');
+      setScan(nextScan); setIndexSummary(nextIndex); setJump(null); setTabs([]); setActive(''); setPage('Practice'); setLearning(null); setLearningMessages([]); setPracticeCode(''); setEvaluation(null); setLearningError('');
     } catch (e) { setError(String(e)); }
   }
   async function importRepository() {
@@ -89,7 +90,7 @@ export default function App() {
       await window.studyRepo.removeRepository(repo.path);
       setRepositories(await window.studyRepo.listRepositories());
       if (scan?.repository.path === repo.path) {
-        setScan(null); setTabs([]); setActive(''); setIndexSummary(null); setJump(null); setLearning(null); setPracticeCode(''); setEvaluation(null);
+        setScan(null); setTabs([]); setActive(''); setIndexSummary(null); setJump(null); setLearning(null); setLearningMessages([]); setPracticeCode(''); setEvaluation(null);
         setPage('Overview');
       }
     } catch (e) { setError(String(e)); }
@@ -154,7 +155,7 @@ export default function App() {
         <div className="card modules"><div><h2>Browse source code</h2><p className="muted">Find source files and symbols in the imported repository. {indexSummary?.indexedAt ? `${indexSummary.symbols} symbols indexed.` : 'Source index not built yet.'}</p></div><button onClick={() => setPage('Explorer')}>Open Explorer →</button></div>
       </section> :
       scan && page === 'Explorer' ? <div className="workspace-with-tutor"><div className="explorer"><div className="file-panel"><div className="panel-title">EXPLORER <span>{scan.fileCount} files</span></div><div className="repo-heading">▾ {scan.repository.name}</div><FileTree nodes={scan.tree} open={file => { void openFile(file); }}/><SymbolExplorer repository={scan.repository.path} summary={indexSummary} onIndexed={setIndexSummary} onOpen={(file, line) => { void openFile(file, line); }}/></div><div className="editor-area"><div className="tabs">{tabs.map(tab => <div className={`tab ${active === tab.path ? 'active-tab' : ''}`} key={tab.path}><button title={tab.path} onClick={() => { setActive(tab.path); setSelection({ startLine: 1, endLine: 1, code: '' }); }}>{tab.path.split(/[\\\\/]/).pop()}</button><button aria-label={`Close ${tab.path}`} onClick={() => { const rest = tabs.filter(t => t.path !== tab.path); setTabs(rest); if (active === tab.path) setActive(rest.at(-1)?.path ?? ''); }}>×</button></div>)}</div>{current ? <Editor path={current.path} value={current.content} theme={theme === 'dark' ? 'vs-dark' : 'light'} options={{ readOnly: true, minimap: { enabled: false }, fontSize: 13, scrollBeyondLastLine: false, automaticLayout: true }} onMount={editor => { explorerEditor.current = editor; if (jump && jump.file === active) { editor.revealLineInCenter(jump.line); editor.setPosition({ lineNumber: jump.line, column: 1 }); } editor.onDidChangeCursorSelection(event => { const range = event.selection; setSelection({ startLine: range.startLineNumber, endLine: range.endLineNumber, code: editor.getModel()?.getValueInRange(range) ?? '' }); }); }} /> : <div className="editor-empty">Select a file to explore</div>}</div></div><TutorPanel hidden={!tutorVisible} key={scan.repository.path + ':explorer'} repository={scan.repository.path} context="Explorer" sourceFile={current?.path} code={selection.code || current?.content.slice(0, 12000) || ''}/></div> :
-      scan && page === 'Practice' ? <div className="workspace-with-tutor"><LearningWorkspace session={learning} code={practiceCode} onCodeChange={value => { setPracticeCode(value); setEvaluation(null); }} evaluation={evaluation} busy={learningBusy} error={learningError} onEvaluate={() => { void evaluateCode(); }} onAdvance={mode => { void advanceLearning(mode); }} onOpenSource={(file, line) => { void openFile(file, line); }}/><TutorPanel hidden={!tutorVisible} key={scan.repository.path + ":practice"} repository={scan.repository.path} context="Practice" code={tutorLearningCode} learningStarted={!!learning} onStartLearning={startLearning}/></div> :
+      scan && page === 'Practice' ? <div className="workspace-with-tutor"><LearningWorkspace session={learning} code={practiceCode} onCodeChange={value => { setPracticeCode(value); setEvaluation(null); }} evaluation={evaluation} busy={learningBusy} error={learningError} onEvaluate={() => { void evaluateCode(); }} onAdvance={mode => { void advanceLearning(mode); }} onOpenSource={(file, line) => { void openFile(file, line); }}/><TutorPanel hidden={!tutorVisible} key={scan.repository.path + ":practice"} repository={scan.repository.path} context="Practice" code={tutorLearningCode} learningStarted={!!learning} onStartLearning={startLearning} messages={learningMessages} onMessagesChange={setLearningMessages}/></div> :
       null}
 
     </main>
