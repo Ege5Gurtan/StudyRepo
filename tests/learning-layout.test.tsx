@@ -79,7 +79,7 @@ describe('adaptive practice layout', () => {
         focusChallengeId="challenge-1"
         onOpenChallenge={() => {}}
         onOpenSource={() => {}}
-        messages={[{ role: 'assistant', content: 'Here is your challenge', challengeId: 'challenge-1' }]}
+        messages={[{ role: 'user', content: 'Create another challenge', challengeId: 'challenge-1' }, { role: 'assistant', content: 'Here is your challenge', challengeId: 'challenge-1' }]}
       />
     );
     expect(html).toContain('CURRENT CHALLENGE');
@@ -89,6 +89,8 @@ describe('adaptive practice layout', () => {
     expect(html).toContain('Return input unchanged');
     expect(html).toContain('Open in editor');
     expect(html).toContain('Open linked challenge');
+    expect(html.match(/Open linked challenge/g)).toHaveLength(1);
+    expect(html).toContain('Create another challenge');
   });
 
 });
