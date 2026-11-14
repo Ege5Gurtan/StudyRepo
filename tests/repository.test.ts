@@ -17,6 +17,7 @@ describe('repository services', () => {
     await writeFile(path.join(root, 'node_modules', 'ignored.js'), 'ignored');
     await writeFile(path.join(base, 'outside.txt'), 'private');
     await symlink(path.join(base, 'outside.txt'), path.join(root, 'link.txt'));
+    await symlink(path.join(root, 'node_modules'), path.join(root, 'alias'));
   });
   afterEach(async () => { await rm(base, { recursive: true, force: true }); });
   it('scans files, languages, and excludes generated directories and links', async () => {
@@ -31,6 +32,7 @@ describe('repository services', () => {
     await expect(readRepositoryFile(root, '../outside.txt')).rejects.toThrow();
     await expect(readRepositoryFile(root, 'link.txt')).rejects.toThrow();
     await expect(readRepositoryFile(root, 'node_modules/ignored.js')).rejects.toThrow();
+    await expect(readRepositoryFile(root, 'alias/ignored.js')).rejects.toThrow();
     await expect(readRepositoryFile(root, 'binary')).rejects.toThrow();
     await expect(scanRepository(path.join(base, 'missing'))).rejects.toThrow();
   });

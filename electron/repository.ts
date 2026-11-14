@@ -42,9 +42,10 @@ export async function readRepositoryFile(root: string, relative: string): Promis
   if (typeof relative !== 'string' || !relative || path.isAbsolute(relative)) throw new Error('Invalid file path.');
   const canonicalRoot = await realpath(root);
   if (canonicalRoot !== root) throw new Error('Repository location changed. Import it again.');
-  const candidate = await realpath(path.resolve(canonicalRoot, relative));
+  const requested = path.resolve(canonicalRoot, relative);
+  const candidate = await realpath(requested);
   const within = path.relative(canonicalRoot, candidate);
-  if (!within || within === '..' || within.startsWith(`..${path.sep}`) || path.isAbsolute(within) ||
+  if (candidate !== requested || !within || within === '..' || within.startsWith(`..${path.sep}`) || path.isAbsolute(within) ||
       relative.split(/[\\/]/).some(part => ignored.has(part))) throw new Error('File is outside the repository or excluded.');
   const info = await stat(candidate);
   if (!info.isFile() || info.size > maxFileSize) throw new Error('Only files up to 2 MB can be displayed.');
