@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Editor, { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import EditorWorker from 'monaco-editor/editor/editor.worker.js?worker';
@@ -8,8 +8,9 @@ import HtmlWorker from 'monaco-editor/language/html/html.worker.js?worker';
 import TsWorker from 'monaco-editor/language/typescript/ts.worker.js?worker';
 import { MockExplanationProvider } from './ai/provider';
 import { sampleQuiz } from './study/quiz';
-import type { Progress, Repository, ScanResult } from './shared/types';
+import type { IndexSummary, Progress, Repository, ScanResult } from './shared/types';
 import { FileTree } from './components/FileTree';
+import { SymbolExplorer } from './components/SymbolExplorer';
 import { PracticeWorkspace, initialPracticeCode } from './components/PracticeWorkspace';
 import { TutorPanel } from './components/TutorPanel';
 
@@ -33,6 +34,9 @@ const provider = new MockExplanationProvider();
 export default function App() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [scan, setScan] = useState<ScanResult | null>(null);
+  const [indexSummary, setIndexSummary] = useState<IndexSummary | null>(null);
+  const [jump, setJump] = useState<{ file: string; line: number } | null>(null);
+  const explorerEditor = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const [progress, setProgress] = useState<Progress>(emptyProgress);
   const [page, setPage] = useState<Page>('Overview');
   const [tabs, setTabs] = useState<OpenFile[]>([]);
@@ -55,8 +59,8 @@ export default function App() {
   async function loadRepository(repo: Repository) {
     try {
       setError('');
-      const [nextScan, nextProgress] = await Promise.all([window.studyRepo.scanRepository(repo.path), window.studyRepo.getProgress(repo.path)]);
-      setScan(nextScan); setProgress(nextProgress); setTabs([]); setActive(''); setPage('Overview'); setAnswers([]); setFeedback('');
+      const [nextScan, nextProgress, nextIndex] = await Promise.all([window.studyRepo.scanRepository(repo.path), window.studyRepo.getProgress(repo.path), window.studyRepo.getIndexSummary(repo.path)]);
+      setScan(nextScan); setProgress(nextProgress); setIndexSummary(nextIndex); setJump(null); setTabs([]); setActive(''); setPage('Overview'); setAnswers([]); setFeedback('');
     } catch (e) { setError(String(e)); }
   }
   async function importRepository() {
@@ -66,17 +70,24 @@ export default function App() {
       if (repo) { setRepositories(await window.studyRepo.listRepositories()); await loadRepository(repo); }
     } catch (e) { setError(String(e)); }
   }
-  async function openFile(file: string) {
+  async function openFile(file: string, line?: number) {
     if (!scan) return;
     try {
       setError('');
       const content = await window.studyRepo.readFile(scan.repository.path, file);
       setTabs(current => current.some(tab => tab.path === file) ? current.map(tab => tab.path === file ? { path: file, content } : tab) : [...current, { path: file, content }]);
-      setActive(file); setPage('Explorer'); setSelection({ startLine: 1, endLine: 1, code: '' });
+      setActive(file); setPage('Explorer'); setSelection({ startLine: 1, endLine: 1, code: '' }); setJump(line ? { file, line } : null);
       await window.studyRepo.markStudied(scan.repository.path, file);
       setProgress(await window.studyRepo.getProgress(scan.repository.path));
     } catch (e) { setError(String(e)); }
   }
+  useEffect(() => {
+    if (jump && jump.file === active && explorerEditor.current) {
+      explorerEditor.current.revealLineInCenter(jump.line);
+      explorerEditor.current.setPosition({ lineNumber: jump.line, column: 1 });
+    }
+  }, [active, jump]);
+
   async function submitQuiz() {
     if (!scan) return;
     try {
@@ -106,9 +117,9 @@ export default function App() {
       scan && page === 'Overview' ? <section className="content"><p className="eyebrow">REPOSITORY OVERVIEW</p><h1>{scan.repository.name}</h1><p className="muted path">{scan.repository.path}</p><div className="stats"><div className="card"><span>FILES</span><strong>{scan.fileCount}</strong><small>in repository</small></div><div className="card"><span>LANGUAGES</span><strong>{Object.keys(scan.languages).length}</strong><small>detected by extension</small></div><div className="card"><span>STUDY PROGRESS</span><strong>{percent}%</strong><small>files opened</small></div></div>
         {scan.skipped > 0 && <p className="notice">{scan.skipped} inaccessible folders could not be scanned.</p>}
         <div className="dashboard-grid"><div className="card"><h2>Languages</h2>{Object.keys(scan.languages).length ? Object.entries(scan.languages).sort((a,b) => b[1]-a[1]).map(([name, count]) => <div className="list-row" key={name}><span>{name}</span><span className="muted">{count} files</span></div>) : <p className="muted">No supported languages detected.</p>}</div><div className="card"><h2>Recently studied</h2>{progress.studiedFiles.length ? progress.studiedFiles.slice(0, 5).map(file => <button className="list-row link" key={file.path} onClick={() => openFile(file.path)}>{file.path}</button>) : <p className="muted">Open a file to start studying.</p>}</div></div>
-        <div className="card modules"><div><p className="eyebrow">EXAMPLE LEARNING MODULE</p><h2>Get to know your codebase</h2><p className="muted">Explore your files, then try a sample C++ practice exercise.</p></div><button onClick={() => setPage('Practice')}>Open practice →</button></div>
+        <div className="card modules"><div><p className="eyebrow">SOURCE INTELLIGENCE</p><h2>Code symbol index</h2><p className="muted">{indexSummary?.indexedAt ? `${indexSummary.symbols} symbols · ${indexSummary.indexedFiles} indexed files · ${indexSummary.skipped} skipped` : 'Not analyzed yet. Find classes, functions and imports from your source files.'}</p></div><button onClick={() => setPage('Explorer')}>Open symbol explorer →</button></div><div className="card modules"><div><p className="eyebrow">EXAMPLE LEARNING MODULE</p><h2>Get to know your codebase</h2><p className="muted">Explore your files, then try a sample C++ practice exercise.</p></div><button onClick={() => setPage('Practice')}>Open practice →</button></div>
       </section> :
-      scan && page === 'Explorer' ? <div className="workspace-with-tutor"><div className="explorer"><div className="file-panel"><div className="panel-title">EXPLORER <span>{scan.fileCount} files</span></div><div className="repo-heading">▾ {scan.repository.name}</div><FileTree nodes={scan.tree} open={openFile}/></div><div className="editor-area"><div className="tabs">{tabs.map(tab => <div className={`tab ${active === tab.path ? 'active-tab' : ''}`} key={tab.path}><button title={tab.path} onClick={() => { setActive(tab.path); setSelection({ startLine: 1, endLine: 1, code: '' }); }}>{tab.path.split(/[\\\\/]/).pop()}</button><button aria-label={`Close ${tab.path}`} onClick={() => { const rest = tabs.filter(t => t.path !== tab.path); setTabs(rest); if (active === tab.path) setActive(rest.at(-1)?.path ?? ''); }}>×</button></div>)}</div>{current ? <Editor path={current.path} value={current.content} theme={theme === 'dark' ? 'vs-dark' : 'light'} options={{ readOnly: true, minimap: { enabled: false }, fontSize: 13, scrollBeyondLastLine: false, automaticLayout: true }} onMount={editor => { editor.onDidChangeCursorSelection(event => { const range = event.selection; setSelection({ startLine: range.startLineNumber, endLine: range.endLineNumber, code: editor.getModel()?.getValueInRange(range) ?? '' }); }); }} /> : <div className="editor-empty">Select a file to explore</div>}</div></div>{tutorVisible && <TutorPanel key={scan.repository.path} repository={scan.repository.name} context={current ? `Explorer · ${current.path} · lines ${selection.startLine}–${selection.endLine}` : 'Explorer'} selection={selection.code} onExplain={current ? async () => { const text = await provider.explain({ file: current.path, ...selection }); setExplanation(text); return text; } : undefined} explanation={explanation}/>}</div> :
+      scan && page === 'Explorer' ? <div className="workspace-with-tutor"><div className="explorer"><div className="file-panel"><div className="panel-title">EXPLORER <span>{scan.fileCount} files</span></div><div className="repo-heading">▾ {scan.repository.name}</div><FileTree nodes={scan.tree} open={file => { void openFile(file); }}/><SymbolExplorer repository={scan.repository.path} summary={indexSummary} onIndexed={setIndexSummary} onOpen={(file, line) => { void openFile(file, line); }}/></div><div className="editor-area"><div className="tabs">{tabs.map(tab => <div className={`tab ${active === tab.path ? 'active-tab' : ''}`} key={tab.path}><button title={tab.path} onClick={() => { setActive(tab.path); setSelection({ startLine: 1, endLine: 1, code: '' }); }}>{tab.path.split(/[\\\\/]/).pop()}</button><button aria-label={`Close ${tab.path}`} onClick={() => { const rest = tabs.filter(t => t.path !== tab.path); setTabs(rest); if (active === tab.path) setActive(rest.at(-1)?.path ?? ''); }}>×</button></div>)}</div>{current ? <Editor path={current.path} value={current.content} theme={theme === 'dark' ? 'vs-dark' : 'light'} options={{ readOnly: true, minimap: { enabled: false }, fontSize: 13, scrollBeyondLastLine: false, automaticLayout: true }} onMount={editor => { explorerEditor.current = editor; if (jump && jump.file === active) { editor.revealLineInCenter(jump.line); editor.setPosition({ lineNumber: jump.line, column: 1 }); } editor.onDidChangeCursorSelection(event => { const range = event.selection; setSelection({ startLine: range.startLineNumber, endLine: range.endLineNumber, code: editor.getModel()?.getValueInRange(range) ?? '' }); }); }} /> : <div className="editor-empty">Select a file to explore</div>}</div></div>{tutorVisible && <TutorPanel key={scan.repository.path} repository={scan.repository.name} context={current ? `Explorer · ${current.path} · lines ${selection.startLine}–${selection.endLine}` : 'Explorer'} selection={selection.code} onExplain={current ? async () => { const text = await provider.explain({ file: current.path, ...selection }); setExplanation(text); return text; } : undefined} explanation={explanation}/>}</div> :
       scan && page === 'Learn' ? <div className="workspace-with-tutor"><section className="content narrow"><p className="eyebrow">REPOSITORY LEARNING</p><h1>Learn {scan.repository.name}</h1><p className="muted">Start by exploring a source file, or review the introductory sample quiz. Repository-generated lessons are not yet available.</p><div className="card modules"><div><h2>Explore real code</h2><p className="muted">Select files and ask the mock tutor about a highlighted section.</p></div><button onClick={() => setPage('Explorer')}>Open Explorer →</button></div><div className="card quiz"><span className="badge">GENERAL EXAMPLE · NOT REPOSITORY-SPECIFIC</span><h2>{sampleQuiz.title}</h2>{sampleQuiz.questions.map((question, index) => <fieldset key={question.prompt}><legend>{index + 1}. {question.prompt}</legend>{question.options.map((option, optionIndex) => <label key={option}><input type="radio" name={`question-${index}`} checked={answers[index] === optionIndex} onChange={() => setAnswers(current => { const next = [...current]; next[index] = optionIndex; return next; })}/>{option}</label>)}</fieldset>)}<button className="primary" onClick={submitQuiz}>Submit answers</button>{feedback && <p role="status">{feedback}</p>}</div></section>{tutorVisible && <TutorPanel key={scan.repository.path} repository={scan.repository.name} context="Learn · introductory quiz"/>}</div> :
       scan && page === 'Practice' ? <div className="workspace-with-tutor"><PracticeWorkspace code={practiceCode} onCodeChange={setPracticeCode} diagnostics={practiceDiagnostics} onDiagnostics={setPracticeDiagnostics}/>{tutorVisible && <TutorPanel key={scan.repository.path} repository={scan.repository.name} context="Practice · Find Missing Chunks" selection={practiceCode} diagnostics={practiceDiagnostics}/>}</div> :
       scan && page === 'Progress' ? <section className="content"><p className="eyebrow">YOUR LEARNING</p><h1>Progress</h1><p className="muted">Stored locally for {scan.repository.name}.</p><div className="stats"><div className="card"><span>FILES STUDIED</span><strong>{progress.studiedFiles.length}</strong><small>of {scan.fileCount} current files</small></div><div className="card"><span>QUIZZES COMPLETED</span><strong>{progress.quizResults.length}</strong><small>attempts saved</small></div></div><div className="card"><h2>Quiz history</h2>{progress.quizResults.length ? progress.quizResults.map(result => <div className="list-row" key={result.id}><span>Sample quiz · {result.score}/{result.total}</span><span className="muted">{new Date(result.completedAt).toLocaleString()}</span></div>) : <p className="muted">No quizzes completed yet.</p>}</div></section> : null}
