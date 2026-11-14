@@ -71,7 +71,8 @@ export default function App() {
       if (shouldFlush) await window.studyRepo.saveConversations(previousRepository!, previousStore);
       const [nextScan, nextIndex, saved] = await Promise.all([window.studyRepo.scanRepository(repo.path), window.studyRepo.getIndexSummary(repo.path), window.studyRepo.loadConversations(repo.path)]);
       if (epoch !== learningEpoch.current) return;
-      setLearningBusy(false); setConversationStore(saved); setArchiveReady(true); setAwaitingGoal(!(saved.conversations.find(item => item.id === saved.activeId)?.archive.entries.length)); setScan(nextScan); setIndexSummary(nextIndex); setJump(null); setTabs([]); setActive(''); setPage('Practice'); setLearningError('');
+      const readyStore = saved.activeId ? saved : newConversation(saved);
+      setLearningBusy(false); setConversationStore(readyStore); setArchiveReady(true); setAwaitingGoal(!(readyStore.conversations.find(item => item.id === readyStore.activeId)?.archive.entries.length)); setScan(nextScan); setIndexSummary(nextIndex); setJump(null); setTabs([]); setActive(''); setPage('Practice'); setLearningError('');
     } catch (e) { if (epoch === learningEpoch.current) setError(String(e)); }
   }
   async function importRepository() {
@@ -220,7 +221,8 @@ export default function App() {
     if (!found || !window.confirm('Delete conversation "' + found.title + '" and its challenges?')) return;
     learningEpoch.current++;
     setLearningBusy(false);
-    const next = deleteConversation(conversationStore, id);
+    const deleted = deleteConversation(conversationStore, id);
+    const next = deleted.activeId ? deleted : newConversation(deleted);
     setConversationStore(next);
     setAwaitingGoal(!(next.conversations.find(item => item.id === next.activeId)?.archive.entries.length));
     setLearningError('');
