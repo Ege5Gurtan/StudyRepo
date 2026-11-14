@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { TutorMessage } from '../shared/types';
 import { requestsNewChallenges } from '../study/chat-intent';
+import { withStudentMessage, withTutorReply } from '../study/chat-messages';
 
 interface Props {
   repository: string;
@@ -31,7 +32,7 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
     const q = question.trim();
     if (!q || busy) return;
     const history = retry ? messages.slice(0, -1) : messages;
-    const updated: TutorMessage[] = [...history, { role: 'user', content: q }];
+    const updated = withStudentMessage(history, q);
     setMessages(updated);
     setInput('');
     setBusy(true);
@@ -47,7 +48,7 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
             });
       // The controlled parent callback uses an immutable archive update. Do not
       // derive this from a stale props closure or the student's message disappears.
-      setMessages([...updated, { role: 'assistant', content: answer }]);
+      setMessages(withTutorReply(updated, answer));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
