@@ -14,15 +14,35 @@ StudyRepo is envisioned as a companion to your IDE, not a replacement for it. It
 
 ## Features
 
-- Import and reopen local folders, browse a collapsible tree, and view UTF-8 source in a read-only Monaco editor with tabs.
-- See extension-based language counts, file counts, recently opened files, and file-based learning progress.
-- Request a clearly labeled mock explanation for selected lines; no code is sent to an AI service.
-- Use a unified repository-first navigation: Overview, Explorer, Learn, Practice, Progress, and Settings.
-- In Practice, edit a sample Unreal C++ exercise in Monaco and run clearly labeled pattern checks (not a C++ compiler).
-- Show or hide a shared mock Tutor panel in Explorer, Learn, and Practice. The tutor uses example responses and does not call an AI model.
-- Analyze a local repository on demand and browse/search classes, interfaces, methods, functions, imports, and basic C++ declarations from Explorer. Click a symbol to jump to its source line. The index is persisted locally in SQLite.
-- Complete a sample quiz in Learn and keep quiz attempts and studied files in a local SQLite database.
-- Use a dark or light theme and resize the explorer panel.
+- Import and reopen local repositories, browse a read-only source tree, and inspect symbols.
+- **Remove a repository from StudyRepo** with the × control beside its name. This removes the application's local metadata, study records, and symbol index; **it never deletes files from disk**.
+- **Practice-first UI:** Overview, Explorer, Practice, Settings. Selecting a repository opens Practice directly.
+- Practice includes a Monaco-based sample C++ exercise and clearly labeled pattern checks (not an actual compiler).
+- **Real AI Tutor:** The right-hand chat panel in Practice and Explorer sends the current code, recent conversation, and optional diagnostics to the OpenAI Responses API.
+- Model configurable by environment variable. No API key is exposed to the browser renderer, committed to source, or stored in SQLite.
+- Dark/light themes; source indexing remains available in Explorer.
+
+## Enable AI Tutor
+
+Create an API key in your OpenAI API account. The key must be available as an environment variable **before** starting StudyRepo. **Do not paste it into the app, the repository, or GitHub issues.**
+
+Windows PowerShell (replace the placeholder locally):
+
+```powershell
+$env:OPENAI_API_KEY = "your-api-key"
+$env:OPENAI_MODEL = "gpt-6-luna"  # optional
+npm run dev
+```
+
+macOS / Linux:
+
+```sh
+export OPENAI_API_KEY="your-api-key"
+export OPENAI_MODEL="gpt-6-luna"  # optional
+npm run dev
+```
+
+Restart the Electron app after changing environment variables. If the key is missing, the tutor shows a configuration error when you send a message. Requests are sent directly from the main process to OpenAI; responses are not stored remotely by this integration (`store: false`) or saved as chat history locally. Current code snippets and recent chat messages **leave your computer** when you ask the tutor a question. API usage is billed separately by OpenAI.
 
 ## Repository intelligence v1
 
@@ -94,10 +114,10 @@ This produces local application assets in `dist/` and `dist-electron/`; it does 
 - Local repositories only; no GitHub integration or account is required.
 - Repository analysis is read-only and ignores common generated directories and symbolic links. Files must be UTF-8 text and no larger than 2 MB. Unreadable files and directories are reported or skipped.
 - Language detection is based on file extensions. File progress means a file was opened, not that its contents were mastered; deleted files can remain in history.
-- The AI provider is a placeholder, not a model. The quiz and sample Practice exercise are generic examples, not generated from the repository. Practice checks are text-pattern checks only; no code execution engine or C++ compiler is included.
+- The Practice exercise is a generic sample, not generated from the repository. Checks are text-pattern checks only; no code execution engine or C++ compiler is included. AI Tutor is available with your own API key.
 - Repository intelligence v1 indexes TypeScript/JavaScript with the TypeScript syntax parser and supports **limited, heuristic C++** declarations and `#include` statements. It does not yet resolve full dependency graphs, references, overloads, macros, or semantic call relationships.
 - Indexing is manual (Explorer → Analyze source / Reindex source). Index entries are snapshots; reindex after edits. It reads up to 1,500 supported source files (maximum 256 KiB each, 20,000 extracted symbols). Files skipped for size, encoding, or accessibility are counted. Repository files are never modified.
-- SQLite data is stored in Electron's user-data directory, outside imported repositories. There is currently no data export, repository removal, migration UI, or installer.
+- SQLite data is stored in Electron's user-data directory, outside imported repositories. Removing an imported repository clears its local records, without touching source files. There is no data export, migration UI, or installer.
 
 ## Roadmap
 
