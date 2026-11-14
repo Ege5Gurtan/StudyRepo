@@ -97,7 +97,7 @@ export class Database {
     if (!this.hasRepository(root)) throw new Error('Repository has not been imported.');
     const archive = validateArchive(raw);
     const serialized = JSON.stringify(archive);
-    if (serialized.length > 1_500_000) throw new Error('Learning archive exceeds local storage limit.');
+    if (serialized.length > 30_000_000) throw new Error('Learning archive exceeds local storage limit.');
     this.db.prepare('INSERT INTO learning_archives(repository, archive_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(repository) DO UPDATE SET archive_json=excluded.archive_json, updated_at=excluded.updated_at').run(root, serialized, new Date().toISOString());
   }
   close(): void { this.db.close(); }
