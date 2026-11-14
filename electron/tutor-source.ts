@@ -1,4 +1,3 @@
-import path from 'node:path';
 import { readRepositoryFile, scanRepository } from './repository';
 import type { TreeNode, TutorRequest } from '../src/shared/types';
 
