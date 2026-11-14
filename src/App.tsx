@@ -11,7 +11,7 @@ import { FileTree } from './components/FileTree';
 import { SymbolExplorer } from './components/SymbolExplorer';
 import { LearningWorkspace } from './components/LearningWorkspace';
 import { TutorPanel } from './components/TutorPanel';
-import { addChallenge, changeChallengeCode, recordEvaluation, selectChallenge, setChatMessages, skipChallenge } from './study/history';
+import { addChallenge, addChallengeWithTutorExplanation, changeChallengeCode, recordEvaluation, selectChallenge, setChatMessages } from './study/history';
 import { emptyConversations, newConversation, selectConversation, changeConversationArchive, updateConversationById, titleConversationIfNew, appendConversationMessage, nameConversationById, renameConversation, deleteConversation } from './study/conversations';
 
 self.MonacoEnvironment = {
@@ -190,7 +190,7 @@ export default function App() {
       if (epoch !== learningEpoch.current) throw new Error('Repository changed; new challenge request cancelled.');
       setConversationStore(old => conversationId ? updateConversationById(old, conversationId, previous => {
         if (previous.entries[previous.activeIndex]?.id !== currentEntry.id) return previous;
-        return addChallenge(skip ? skipChallenge(previous) : previous, session);
+        return addChallengeWithTutorExplanation(previous, session, skip);
       }) : old);
       return extend
         ? 'I created a new learning set with ' + session.topics.length + ' topics. The first challenge, "' + session.lesson.challenge.title + '", is now in your code workspace. The rest will be generated as you continue.'
