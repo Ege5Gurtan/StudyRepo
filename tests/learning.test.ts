@@ -116,6 +116,21 @@ describe('adaptive learning', () => {
     }
   });
 
+  it('finds relevant terrain code by content even when other files sort first', async () => {
+    const root = await realpath(await mkdtemp(path.join(os.tmpdir(), 'studyrepo-focused-')));
+    try {
+      await mkdir(path.join(root, 'src'));
+      for (const file of ['a.js', 'b.js', 'c.js']) {
+        await writeFile(path.join(root, 'src', file), 'const unrelated = true;');
+      }
+      await writeFile(path.join(root, 'src', 'terrain.js'), 'export function countMaskedTiles(terrain) { return terrain.flat().filter(tile => tile.masked).length; }');
+      const files = await retrieveLearningContext(root, 'create a coding challenge about tile mechanics');
+      expect(files.some(file => file.file.endsWith('terrain.js'))).toBe(true);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it('returns an AI code review without running student code', async () => {
     vi.stubEnv('OPENAI_API_KEY', 'test-key');
     vi.stubGlobal('fetch', vi.fn(async () => response({
