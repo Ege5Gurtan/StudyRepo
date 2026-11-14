@@ -131,3 +131,16 @@ input { accent-color: #8270e4; }
 .symbol-result small { color: var(--accent); font-size: 10px; }
 .symbol-file { font-size: 10px; overflow-wrap: anywhere; }
 .symbol-error { color: #ffacac; overflow-wrap: anywhere; font-size: 11px; }
+
+/* Simplified Practice-first navigation and safe repository removal */
+.recent-item { display: flex; align-items: center; border-radius: 7px; min-width: 0; }
+.recent-item:hover, .recent-item.selected-repo { background: var(--card); }
+.recent .recent-open { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.recent .recent-remove { flex: none; padding: 6px 9px; background: transparent; color: var(--muted); border: 0; font-size: 18px; }
+.recent .recent-remove:hover, .recent .recent-remove:focus-visible { color: #ff9b9b; background: #512b36; }
+.tutor-error { background: #512b36; color: #ffc3c3; padding: 10px; border-radius: 7px; overflow-wrap: anywhere; font-size: 12px; }
+.tutor-error button { color: inherit; background: none; border: 0; text-decoration: underline; }
+.tutor-heading .tutor-clear { background: none; border: 0; color: var(--muted); font-size: 12px; font-weight: 400; }
+.tutor-heading .tutor-clear:hover { color: var(--text); }
+.tutor-compose button:disabled { opacity: .45; }
+.tutor-panel .tutor-chat { min-height: 160px; }
