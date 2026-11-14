@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addChallenge, changeChallengeCode, emptyArchive, recordEvaluation, selectChallenge, skipChallenge, validateArchive } from '../src/study/history';
+import { addChallenge, addChallengeWithTutorExplanation, changeChallengeCode, emptyArchive, recordEvaluation, selectChallenge, skipChallenge, validateArchive } from '../src/study/history';
 import type { LearningSession } from '../src/shared/types';
 
 const makeSession = (title: string, topicIndex = 0): LearningSession => ({
@@ -44,6 +44,34 @@ describe('challenge history state', () => {
     archive = recordEvaluation(archive, { status: 'needs_revision', feedback: 'Review of first version', criteria: [] }, submittedCode);
     expect(archive.entries[0].code).toBe('return 2;');
     expect(archive.entries[0].attempts[0].code).toBe('return 1;');
+  });
+
+  it('adds the next lesson explanation to Tutor with a link to the new challenge', () => {
+    const first = addChallenge(emptyArchive(), makeSession('First'));
+    const advanced = addChallengeWithTutorExplanation(first, makeSession('Second', 1));
+    expect(advanced.entries).toHaveLength(2);
+    expect(advanced.entries[0].status).toBe('active');
+    expect(advanced.entries[1].session.lesson.challenge.title).toBe('Second');
+    expect(advanced.messages).toHaveLength(1);
+    expect(advanced.messages[0]).toMatchObject({
+      role: 'assistant',
+      challengeId: advanced.entries[1].id
+    });
+    expect(advanced.messages[0].content).toContain('Function explanation');
+    expect(advanced.messages[0].content).toContain('Complete function');
+    expect(validateArchive(advanced)).toEqual(advanced);
+  });
+
+  it('skips the previous challenge and persists the new Tutor explanation without losing older messages', () => {
+    const first = addChallenge(emptyArchive(), makeSession('First'));
+    const previous = { ...first, messages: [{ role: 'user' as const, content: 'Help with this' }] };
+    const advanced = addChallengeWithTutorExplanation(previous, makeSession('After skip', 1), true);
+    expect(advanced.entries[0].status).toBe('skipped');
+    expect(advanced.entries[1].status).toBe('active');
+    expect(advanced.messages[0]).toEqual(previous.messages[0]);
+    expect(advanced.messages[1].challengeId).toBe(advanced.entries[1].id);
+    expect(advanced.messages[1].content).toContain('After skip');
+    expect(validateArchive(advanced)).toEqual(advanced);
   });
 
   it('rejects oversized and malformed archives at IPC boundary', () => {
