@@ -164,3 +164,9 @@ In Practice, requests such as "create a challenge about tile mechanics" are rout
 Assistant responses in the Tutor panel now support GitHub-flavored Markdown (headings, lists, emphasis, tables, links, blockquotes), Monaco-highlighted fenced code with Copy actions, and basic mathematical notation rendered with native MathML. Unsupported TeX commands are displayed literally. Existing saved assistant messages are rendered with the new formatter, including normalization of legacy escaped paragraph breaks.
 
 AI-generated HTML is sanitized with DOMPurify, and links are copied rather than navigating Electron to untrusted URLs. Arbitrary scripts, iframes, model-generated styles and code execution are not permitted. Interactive quizzes and sandboxed mini-apps are planned for separate milestones.
+
+## Source-aware Tutor and navigation continuity
+
+Ask the Tutor about a specific source file, such as `WorldManager.cpp`, to request an up-to-date, line-numbered excerpt from that actual imported file rather than relying solely on a shortened lesson summary. Bounded excerpts explicitly state when a file has more lines, and you can request a later span (for example, `Explain WorldManager.cpp lines 250-350`). Files with ambiguous names require a relative path. Files remain read-only; sensitive and excluded paths are not retrieved.
+
+The same Tutor instance remains mounted when switching between Practice, Explorer, Overview and Settings. In-flight requests continue, and replies are stored under the current conversation, so leaving Practice does not silently discard a pending AI reply. Switching conversations or repositories remains a separate context change.

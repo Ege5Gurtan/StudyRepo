@@ -76,3 +76,9 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - `src/study/rich-text.ts` normalizes legacy escaped paragraph separators, parses GFM via `marked`, and supplies a limited native MathML implementation.
 - `src/components/RichTutorMessage.tsx` sanitizes model-generated HTML using DOMPurify. Monaco syntax colorization applies only to inert fenced code blocks. Copy actions are user-initiated; never execute code from the model or navigate to untrusted links in Electron.
 - Keep all assistant responses as their original text in the conversation archive; formatting is a display concern. Existing tool-calling and conversation/challenge history must remain unchanged.
+
+## Persistent Tutor and named-file retrieval
+
+- The app renders one persistent `TutorPanel` for its current repository/conversation outside page-conditional content. Hide it on Overview/Settings without unmounting it. Preserve in-flight replies when switching workspace tabs.
+- `electron/tutor-source.ts` resolves explicitly requested source filenames against the imported repository tree, protects private paths, retrieves via `readRepositoryFile`, and provides bounded line-numbered excerpts. Truncated excerpts must be labeled, and line ranges can be requested in later messages. Never claim to have inspected omitted lines.
+- Existing normal Tutor and structured-challenge action routes both receive named-file context. Avoid shipping the full repository to a provider; keep bounded, opt-in source retrieval.
