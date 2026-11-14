@@ -158,3 +158,9 @@ A license has not yet been specified. An explicit license will be added before p
 ## Structured chat actions
 
 In Practice, requests such as "create a challenge about tile mechanics" are routed through an OpenAI function call rather than answered as a plain text exercise. A single focused challenge is opened in Monaco and saved in the active conversation's history. Requests for a series start a new learning set. Ordinary questions still receive explanatory chat responses. StudyRepo validates generated actions and never allows the model to execute repository code.
+
+## Rich AI Tutor formatting
+
+Assistant responses in the Tutor panel now support GitHub-flavored Markdown (headings, lists, emphasis, tables, links, blockquotes), Monaco-highlighted fenced code with Copy actions, and basic mathematical notation rendered with native MathML. Unsupported TeX commands are displayed literally. Existing saved assistant messages are rendered with the new formatter, including normalization of legacy escaped paragraph breaks.
+
+AI-generated HTML is sanitized with DOMPurify, and links are copied rather than navigating Electron to untrusted URLs. Arbitrary scripts, iframes, model-generated styles and code execution are not permitted. Interactive quizzes and sandboxed mini-apps are planned for separate milestones.

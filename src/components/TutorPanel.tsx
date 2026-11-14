@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { TutorMessage } from '../shared/types';
 import { withStudentMessage, withTutorReply } from '../study/chat-messages';
+import { RichTutorMessage } from './RichTutorMessage';
 
 interface Props {
   repository: string;
@@ -67,7 +68,7 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
     <div className="tutor-context">{repository} / {context}{sourceFile ? ` / ${sourceFile}` : ''}</div>
     <div className="tutor-chat" aria-live="polite">
       {messages.length === 0 && <p className="muted">Tell me what you'd like to study, or ask about your current challenge. I'll guide you through the reasoning.</p>}
-      {messages.map((message, index) => <div className={`tutor-message ${message.role === 'user' ? 'student' : 'tutor'}`} key={index}>{message.content}</div>)}
+      {messages.map((message, index) => <div className={`tutor-message ${message.role === 'user' ? 'student' : 'tutor'}`} key={index}>{message.role === 'assistant' ? <RichTutorMessage content={message.content}/> : message.content}</div>)}
       {busy && <p role="status" className="muted">Thinking…</p>}
     </div>
     {error && <p className="tutor-error" role="alert">{error} <button onClick={() => { void send(messages.at(-1)?.role === 'user' ? messages.at(-1)?.content ?? '' : '', true); }}>Retry</button></p>}

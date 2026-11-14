@@ -139,7 +139,7 @@ export default function App() {
       setConversationStore(old => titleConversationIfNew(
         updateConversationById(old, conversationId, current => addChallenge(current, session)), goal));
       setAwaitingGoal(false);
-      return session.lesson.introduction + '\\n\\n' + session.lesson.explanation;
+      return session.lesson.introduction + '\n\n' + session.lesson.explanation;
     } catch (e) { if (epoch === learningEpoch.current) setLearningError(String(e)); throw e; }
     finally { if (epoch === learningEpoch.current) setLearningBusy(false); }
   }
