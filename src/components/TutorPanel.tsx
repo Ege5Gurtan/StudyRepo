@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { TutorMessage } from '../shared/types';
-import { requestsNewChallenges } from '../study/chat-intent';
 import { withStudentMessage, withTutorReply } from '../study/chat-messages';
 
 interface Props {
@@ -9,7 +8,7 @@ interface Props {
   hidden?: boolean;
   learningStarted?: boolean;
   onStartLearning?: (goal: string) => Promise<string>;
-  onGenerateChallenges?: (request: string) => Promise<string>;
+  onGenerateChallenges?: (request: string, scope: 'single' | 'set') => Promise<string>;
   messages?: TutorMessage[];
   onMessagesChange?: (messages: TutorMessage[]) => void;
   code: string;
@@ -40,8 +39,16 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
     try {
       const answer = !learningStarted && onStartLearning
         ? await onStartLearning(q)
-        : context === 'Practice' && onGenerateChallenges && requestsNewChallenges(q)
-          ? await onGenerateChallenges(q)
+        : context === 'Practice' && onGenerateChallenges
+          ? await (async () => {
+              const action = await window.studyRepo.askTutorWithActions({
+                repository, context, code: code.slice(0, 12000), sourceFile,
+                question: q, diagnostics, history: history.slice(-10)
+              });
+              return action.type === 'generate_challenge'
+                ? await onGenerateChallenges(action.focus, action.scope)
+                : action.text;
+            })()
           : await window.studyRepo.askTutor({
               repository, context, code: code.slice(0, 12000), sourceFile,
               question: q, diagnostics, history: history.slice(-10)

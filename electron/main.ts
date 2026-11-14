@@ -4,6 +4,7 @@ import { Database } from './database';
 import { readRepositoryFile, scanRepository } from './repository';
 import { buildRepositoryIndex } from './intelligence';
 import { askTutor } from './tutor';
+import { askTutorWithActions } from './tutor-actions';
 import { generateLesson, evaluateSolution } from './learning';
 import { sampleQuiz, scoreQuiz } from '../src/study/quiz';
 
@@ -24,6 +25,11 @@ function registerHandlers() {
   ipcMain.handle('repositories:remove', (_event, root: unknown) => {
     requireRepository(root);
     db.removeRepository(root);
+  });
+  ipcMain.handle('tutor:action', async (_event, request: unknown) => {
+    if (!request || typeof request !== 'object') throw new Error('Invalid tutor request.');
+    requireRepository((request as { repository?: unknown }).repository);
+    return askTutorWithActions(request);
   });
   ipcMain.handle('tutor:ask', async (_event, request: unknown) => {
     if (!request || typeof request !== 'object') throw new Error('Invalid tutor request.');

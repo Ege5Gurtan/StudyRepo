@@ -56,6 +56,9 @@ export interface TutorRequest {
   diagnostics?: string[];
   history: TutorMessage[];
 }
+export type TutorAction =
+  | { type: 'message'; text: string }
+  | { type: 'generate_challenge'; focus: string; scope: 'single' | 'set' };
 export interface LearningReference {
   file: string;
   startLine: number;
@@ -94,7 +97,7 @@ export interface LearningEvaluation {
 export interface LearningGenerateRequest {
   repository: string;
   goal: string;
-  mode: 'start' | 'next' | 'similar' | 'extend';
+  mode: 'start' | 'next' | 'similar' | 'extend' | 'focused';
   topics?: LearningTopic[];
   topicIndex?: number;
   previousChallenge?: CodingChallenge;
@@ -139,6 +142,7 @@ export interface StudyRepoAPI {
   importRepository(): Promise<Repository | null>;
   removeRepository(path: string): Promise<void>;
   askTutor(request: TutorRequest): Promise<string>;
+  askTutorWithActions(request: TutorRequest): Promise<TutorAction>;
   generateLesson(request: LearningGenerateRequest): Promise<LearningSession>;
   evaluateSolution(request: LearningEvaluateRequest): Promise<LearningEvaluation>;
   loadLearningArchive(repository: string): Promise<LearningArchive>;

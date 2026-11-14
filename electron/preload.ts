@@ -6,6 +6,7 @@ const api: StudyRepoAPI = {
   importRepository: () => ipcRenderer.invoke('repositories:import'),
   removeRepository: (root) => ipcRenderer.invoke('repositories:remove', root),
   askTutor: (request) => ipcRenderer.invoke('tutor:ask', request),
+  askTutorWithActions: (request) => ipcRenderer.invoke('tutor:action', request),
   generateLesson: (request) => ipcRenderer.invoke('learning:generate', request),
   loadLearningArchive: (root) => ipcRenderer.invoke('learning:history:get', root),
   loadConversations: (root) => ipcRenderer.invoke('conversations:get', root),

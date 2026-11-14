@@ -161,7 +161,7 @@ export default function App() {
     } catch (e) { if (epoch === learningEpoch.current) setLearningError(String(e)); }
     finally { if (epoch === learningEpoch.current) setLearningBusy(false); }
   }
-  async function advanceLearning(mode: 'next' | 'similar' | 'extend', skip = false, focus?: string): Promise<string> {
+  async function advanceLearning(mode: 'next' | 'similar' | 'extend' | 'focused', skip = false, focus?: string): Promise<string> {
     if (!scan || !activeEntry || !archiveReady) throw new Error('Import a repository and start learning first.');
     if (archive.activeIndex !== archive.entries.length - 1 && !focus) throw new Error('Open your latest challenge before advancing.');
     const epoch = learningEpoch.current;
@@ -171,13 +171,14 @@ export default function App() {
     const index = mode === 'next' ? currentSession.topicIndex + 1 : currentSession.topicIndex;
     // A plan is only a short batch. After its final topic, generate a new plan.
     const extend = mode === 'extend' || (mode === 'next' && index >= currentSession.topics.length);
+    const focused = mode === 'focused';
     setLearningBusy(true); setLearningError('');
     try {
       const session = await window.studyRepo.generateLesson({
         repository: scan.repository.path, goal: currentSession.goal,
         mode: extend ? 'extend' : mode,
         topics: currentSession.topics,
-        topicIndex: extend ? currentSession.topicIndex : index,
+        topicIndex: extend || focused ? currentSession.topicIndex : index,
         previousChallenge: currentSession.lesson.challenge,
         focus: focus?.slice(0, 1500)
       });
@@ -188,15 +189,14 @@ export default function App() {
       }) : old);
       return extend
         ? 'I created a new learning set with ' + session.topics.length + ' topics. The first challenge, "' + session.lesson.challenge.title + '", is now in your code workspace. The rest will be generated as you continue.'
-        : 'Your next challenge, "' + session.lesson.challenge.title + '", is now in the code workspace.';
+        : 'Created "' + session.lesson.challenge.title + '" in your code workspace and saved it in this conversation\'s challenge history.';
     } catch (e) {
       if (epoch === learningEpoch.current) setLearningError(String(e));
       throw e;
     } finally { if (epoch === learningEpoch.current) setLearningBusy(false); }
   }
-  async function generateChallengesFromChat(request: string): Promise<string> {
-    // A natural-language request generates structured app content, not just a text list.
-    return advanceLearning('extend', false, request);
+  async function generateChallengesFromChat(request: string, scope: 'single' | 'set'): Promise<string> {
+    return advanceLearning(scope === 'set' ? 'extend' : 'focused', false, request);
   }
   function createChat() {
     learningEpoch.current++;

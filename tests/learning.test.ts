@@ -71,6 +71,20 @@ describe('adaptive learning', () => {
     expect(() => validateGenerateRequest({ ...request, focus: 'x'.repeat(1501) })).toThrow();
   });
 
+  it('supports a focused challenge that replaces old topic labels', () => {
+    const oldTopics = [{ id: 'react', title: 'React state', objective: 'Hooks' }];
+    const request = validateGenerateRequest({
+      repository: '/repo', goal: 'Learn JavaScript', mode: 'focused',
+      topics: oldTopics, topicIndex: 0, focus: 'Tile mechanics'
+    });
+    const result = parseLesson({
+      ...lesson, topics: [{ id: 'terrain', title: 'Tile mechanics', objective: 'Count masked tiles' }]
+    }, [{ file: 'src/game.js', code: 'function f() {}', totalLines: 1 }], request);
+    expect(result.topicIndex).toBe(0);
+    expect(result.topics[0].title).toBe('Tile mechanics');
+    expect(result.topics).not.toEqual(oldTopics);
+  });
+
   it('validates evaluation evidence and avoids equating unsupported status with success', () => {
     expect(validateEvaluation({ status: 'unable_to_verify', feedback: 'Requires execution.', criteria: [] }).status).toBe('unable_to_verify');
     expect(() => validateEvaluation({ status: 'compiled', feedback: 'Everything works.', criteria: [] })).toThrow();
@@ -97,6 +111,21 @@ describe('adaptive learning', () => {
       expect(body.store).toBe(false);
       expect(body.text.format.type).toBe('json_schema');
       expect(body.input).not.toContain('SECRET');
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it('finds relevant terrain code by content even when other files sort first', async () => {
+    const root = await realpath(await mkdtemp(path.join(os.tmpdir(), 'studyrepo-focused-')));
+    try {
+      await mkdir(path.join(root, 'src'));
+      for (const file of ['a.js', 'b.js', 'c.js']) {
+        await writeFile(path.join(root, 'src', file), 'const unrelated = true;');
+      }
+      await writeFile(path.join(root, 'src', 'terrain.js'), 'export function countMaskedTiles(terrain) { return terrain.flat().filter(tile => tile.masked).length; }');
+      const files = await retrieveLearningContext(root, 'create a coding challenge about tile mechanics');
+      expect(files.some(file => file.file.endsWith('terrain.js'))).toBe(true);
     } finally {
       await rm(root, { recursive: true, force: true });
     }
