@@ -83,9 +83,9 @@ export function LearningWorkspace({ session, challengeId, entries, activeIndex, 
       </div> : <p className="muted">Write your solution, then ask AI to review it. You can ask questions in the Tutor chat at any time.</p>}
       {latest && <div className="learning-next-actions">
         <button disabled={busy} onClick={() => onAdvance('similar')}>↻ Similar challenge</button>
-        {!finalTopic && (passed
-          ? <button disabled={busy} className="primary" onClick={() => onAdvance('next')}>Next topic →</button>
-          : <button disabled={busy} onClick={onSkip}>Skip to next topic →</button>)}
+        {passed
+          ? <button disabled={busy} className="primary" onClick={() => onAdvance('next')}>{finalTopic ? 'Continue to new topics →' : 'Next topic →'}</button>
+          : <button disabled={busy} onClick={onSkip}>{finalTopic ? 'Skip to new topics →' : 'Skip to next topic →'}</button>}
       </div>}
     </div>
   </section>;
