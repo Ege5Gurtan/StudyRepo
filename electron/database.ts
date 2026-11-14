@@ -63,7 +63,12 @@ export class Database {
     return { indexedFiles: files.count, symbols: symbols.count, skipped: row?.skipped ?? 0, indexedAt: row?.indexedAt ?? null };
   }
   searchSymbols(root: string, query: string): CodeSymbol[] {
-    const escaped = query.trim().slice(0, 120).replace(/[\\%_]/g, '\\  close(): void { this.db.close(); }');
+    const term = query.trim().slice(0, 120);
+    return this.db.prepare(
+      'SELECT file, name, kind, line FROM code_symbols WHERE repository = ? AND (instr(lower(name), lower(?)) > 0 OR instr(lower(file), lower(?)) > 0) ORDER BY name, file, line LIMIT 150'
+    ).all(root, term, term) as unknown as CodeSymbol[];
+  }
+  close(): void { this.db.close(); }');
     const pattern = '%' + escaped + '%';
     return this.db.prepare("SELECT file, name, kind, line FROM code_symbols WHERE repository = ? AND (name LIKE ? ESCAPE '\\' OR file LIKE ? ESCAPE '\\') ORDER BY CASE WHEN name LIKE ? ESCAPE '\\' THEN 0 ELSE 1 END, name, file, line LIMIT 150").all(root, pattern, pattern, pattern) as unknown as CodeSymbol[];
   }
