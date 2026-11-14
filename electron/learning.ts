@@ -169,7 +169,7 @@ export function parseLesson(value: unknown, files: ContextFile[], request: Learn
 
 export async function generateLesson(value: unknown): Promise<LearningSession> {
   const request = validateGenerateRequest(value);
-  const files = await retrieveLearningContext(request.repository, request.goal + ' ' + (request.topics?.[request.topicIndex ?? 0]?.title ?? ''));
+  const files = await retrieveLearningContext(request.repository, request.goal + ' ' + (request.focus ?? '') + ' ' + (request.topics?.[request.topicIndex ?? 0]?.title ?? ''));
   if (!files.length) throw new Error('No supported source files found. Import a repository with JavaScript, TypeScript, C++, Python, or another supported language.');
   const snippets = files.map(f => 'FILE ' + f.file + ' (lines 1-' + f.code.split(/\r?\n/).length + ')\n' + f.code).join('\n\n');
   const topic = request.topics?.[request.topicIndex ?? 0];
