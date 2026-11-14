@@ -20,9 +20,9 @@ export function changeChallengeCode(archive: LearningArchive, code: string): Lea
   return { ...archive, entries: archive.entries.map((entry, i) => i === archive.activeIndex ? { ...entry, code } : entry) };
 }
 
-export function recordEvaluation(archive: LearningArchive, evaluation: LearningEvaluation): LearningArchive {
+export function recordEvaluation(archive: LearningArchive, evaluation: LearningEvaluation, submittedCode?: string): LearningArchive {
   return { ...archive, entries: archive.entries.map((entry, i) => i === archive.activeIndex ? {
-    ...entry, attempts: [...entry.attempts, { code: entry.code, evaluation, submittedAt: new Date().toISOString() }]
+    ...entry, attempts: [...entry.attempts, { code: submittedCode ?? entry.code, evaluation, submittedAt: new Date().toISOString() }]
   } : entry) };
 }
 
