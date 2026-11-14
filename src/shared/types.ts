@@ -46,9 +46,21 @@ export interface IndexSummary {
   skipped: number;
   indexedAt: string | null;
 }
+export interface TutorMessage { role: 'user' | 'assistant'; content: string }
+export interface TutorRequest {
+  repository: string;
+  context: 'Practice' | 'Explorer';
+  sourceFile?: string;
+  question: string;
+  code: string;
+  diagnostics?: string[];
+  history: TutorMessage[];
+}
 export interface StudyRepoAPI {
   listRepositories(): Promise<Repository[]>;
   importRepository(): Promise<Repository | null>;
+  removeRepository(path: string): Promise<void>;
+  askTutor(request: TutorRequest): Promise<string>;
   scanRepository(path: string): Promise<ScanResult>;
   readFile(repository: string, path: string): Promise<string>;
   markStudied(repository: string, path: string): Promise<void>;
