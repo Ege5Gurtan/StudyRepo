@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { TutorMessage } from '../shared/types';
+import { requestsNewChallenges } from '../study/chat-intent';
 
 interface Props {
   repository: string;
@@ -7,6 +8,7 @@ interface Props {
   hidden?: boolean;
   learningStarted?: boolean;
   onStartLearning?: (goal: string) => Promise<string>;
+  onGenerateChallenges?: (request: string) => Promise<string>;
   messages?: TutorMessage[];
   onMessagesChange?: (messages: TutorMessage[]) => void;
   code: string;
@@ -14,7 +16,7 @@ interface Props {
   diagnostics?: string[];
 }
 
-export function TutorPanel({ repository, context, code, sourceFile, diagnostics = [], hidden = false, learningStarted = true, onStartLearning, messages: controlledMessages, onMessagesChange }: Props) {
+export function TutorPanel({ repository, context, code, sourceFile, diagnostics = [], hidden = false, learningStarted = true, onStartLearning, onGenerateChallenges, messages: controlledMessages, onMessagesChange }: Props) {
   const [localMessages, setLocalMessages] = useState<TutorMessage[]>([]);
   const messages = controlledMessages ?? localMessages;
   const setMessages = (update: TutorMessage[] | ((old: TutorMessage[]) => TutorMessage[])) => {
@@ -37,11 +39,15 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
     try {
       const answer = !learningStarted && onStartLearning
         ? await onStartLearning(q)
-        : await window.studyRepo.askTutor({
-            repository, context, code: code.slice(0, 12000), sourceFile,
-            question: q, diagnostics, history: history.slice(-10)
-          });
-      setMessages(current => [...current, { role: 'assistant', content: answer }]);
+        : context === 'Practice' && onGenerateChallenges && requestsNewChallenges(q)
+          ? await onGenerateChallenges(q)
+          : await window.studyRepo.askTutor({
+              repository, context, code: code.slice(0, 12000), sourceFile,
+              question: q, diagnostics, history: history.slice(-10)
+            });
+      // The controlled parent callback uses an immutable archive update. Do not
+      // derive this from a stale props closure or the student's message disappears.
+      setMessages([...updated, { role: 'assistant', content: answer }]);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -58,6 +64,7 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
     </div>
     {error && <p className="tutor-error" role="alert">{error} <button onClick={() => { void send(messages.at(-1)?.role === 'user' ? messages.at(-1)?.content ?? '' : '', true); }}>Retry</button></p>}
     <div className="tutor-actions">
+      {learningStarted && context === 'Practice' && onGenerateChallenges && <button disabled={busy} onClick={() => { void send('Give me another set of coding challenges.'); }}>Generate challenges</button>}
       {learningStarted && <button disabled={busy} onClick={() => { void send('Give me a hint, without revealing the full solution.'); }}>Give hint</button>}
       {learningStarted && <button disabled={busy} onClick={() => { void send('Explain the programming concepts in this code.'); }}>Explain concepts</button>}
       {diagnostics.length > 0 && <button disabled={busy} onClick={() => { void send('Explain these test diagnostics and guide me toward fixing them.'); }}>Explain errors</button>}
