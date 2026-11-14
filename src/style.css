@@ -176,3 +176,71 @@ input { accent-color: #8270e4; }
 .learning-next-actions button:not(.primary) { color: var(--text); background: var(--side); border: 1px solid var(--border); }
 
 .learning-restart { border: 1px solid var(--border); background: var(--card); color: var(--text); padding: 6px 9px; border-radius: 6px; font-size: 11px; }
+
+/* Practice layout: use the available viewport for writing code.
+   Each area scrolls independently, so evaluation controls remain visible. */
+.workspace-with-tutor > .learning-workspace {
+  flex: 1 1 0;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.learning-workspace .learning-problem {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 32%;
+  overflow: auto;
+  padding: 12px 16px;
+}
+.learning-workspace .learning-problem > p {
+  margin: 4px 0 8px;
+}
+.learning-workspace .learning-plan {
+  margin: 8px 0;
+}
+.learning-workspace .learning-references {
+  margin: 7px 0;
+}
+.learning-workspace .learning-challenge-title {
+  margin: 10px 0 5px;
+}
+.learning-workspace .learning-criteria {
+  margin-top: 8px;
+}
+.learning-workspace .learning-criteria summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+}
+.learning-workspace .practice-editor {
+  flex: 1 1 0;
+  min-height: 0;
+}
+.learning-workspace .practice-editor-body {
+  min-height: 0;
+  flex: 1 1 0;
+}
+.learning-workspace .learning-evaluation {
+  flex: 0 0 auto;
+  max-height: 30%;
+  min-height: 84px;
+  padding: 12px 16px;
+  overflow-y: auto;
+}
+.learning-workspace .practice-tests-header {
+  min-height: 38px;
+}
+.learning-workspace .practice-tests-header > button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  min-height: 34px;
+}
+.learning-workspace .learning-evaluation > p {
+  margin: 7px 0 0;
+  font-size: 12px;
+}
+@media (max-height: 650px) {
+  .learning-workspace .learning-problem { max-height: 28%; }
+  .learning-workspace .learning-evaluation { max-height: 28%; }
+}
