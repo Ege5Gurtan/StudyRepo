@@ -8,6 +8,10 @@ vi.mock('@monaco-editor/react', () => ({
   default: () => <div data-testid="monaco-editor">Editor</div>
 }));
 
+vi.mock('../src/components/RichTutorMessage', () => ({
+  RichTutorMessage: ({ content }: { content: string }) => <div>{content}</div>
+}));
+
 const session: LearningSession = {
   goal: 'Learn JavaScript',
   topicIndex: 0,
