@@ -43,3 +43,10 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - The Electron main process validates imported repository roots for `learning:generate` and `learning:evaluate`. Keep model API keys server-side and `store: false`.
 - `LearningWorkspace.tsx` renders the planned topics, verified source links, Monaco scratchpad, and AI evaluation. The chat in `TutorPanel.tsx` starts a learning session from the student's first prompt and remains available during a challenge.
 - Session state is currently in React memory, not persisted. Never treat AI review as real compilation. Keep tests for retrieval, references, input bounds and structured API results in `tests/learning.test.ts`.
+
+## Saved challenge history
+
+- `src/study/history.ts` owns pure immutable history operations: append, select, change draft, record reviewed submissions, and mark skipped challenges. A separate history is saved per imported repository.
+- `electron/database.ts` uses the `learning_archives` SQLite table for stored history; the only renderer access is restricted `learning:history:get/save` IPC, guarded by imported-repository validation and archive size/shape limits. Repository removal deletes its archive, never source files.
+- In Practice, navigating backwards/forwards must restore code and review feedback for the selected challenge. Keep previous attempts immutable; allow users to restore an earlier attempt into the scratchpad without silently overwriting history.
+- Do not make AI approval a requirement for moving on: users may skip to the next topic. Older challenges remain accessible, and new learning goals do not wipe saved history.
