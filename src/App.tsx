@@ -220,7 +220,7 @@ export default function App() {
       : tutorLearningCode;
     const requestFile = requestContext === 'Explorer' ? current?.path : undefined;
     const existingLesson = !!previousEntry && !awaitingGoal;
-    setConversationStore(old => appendConversationMessage(old, conversationId, { role: 'user', content: q, challengeId: previousEntry?.id }));
+    setConversationStore(old => appendConversationMessage(old, conversationId, { role: 'user', content: q }));
     let generatedChallenge = false;
     try {
       let answer: string;
@@ -267,7 +267,7 @@ export default function App() {
         ...a,
         messages: [...a.messages, {
           role: 'assistant' as const, content: answer,
-          challengeId: generatedChallenge ? a.entries.at(-1)?.id : previousEntry?.id
+          challengeId: generatedChallenge ? a.entries.at(-1)?.id : requestContext === 'Practice' ? previousEntry?.id : undefined
         }].slice(-40)
       })));
     } catch (e) {
