@@ -70,3 +70,9 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - `electron/tutor-actions.ts` requests the restricted OpenAI `generate_challenge` function in Practice. Model text remains a normal answer; validated tool calls are executed by application code, never by model-authored code.
 - A call with `scope=single` uses focused learning mode to create one repository-derived exercise. `scope=set` creates the first exercise of another short learning set. Both use the existing conversation archive and stale-response guards.
 - Tool calls must not permit arbitrary filesystem writes, execution, or unvalidated action names. Maintain regression tests for challenge actions and normal tutor replies.
+
+## Rich Tutor Markdown
+
+- `src/study/rich-text.ts` normalizes legacy escaped paragraph separators, parses GFM via `marked`, and supplies a limited native MathML implementation.
+- `src/components/RichTutorMessage.tsx` sanitizes model-generated HTML using DOMPurify. Monaco syntax colorization applies only to inert fenced code blocks. Copy actions are user-initiated; never execute code from the model or navigate to untrusted links in Electron.
+- Keep all assistant responses as their original text in the conversation archive; formatting is a display concern. Existing tool-calling and conversation/challenge history must remain unchanged.
