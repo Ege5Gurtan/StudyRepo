@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addChallenge, addChallengeWithTutorExplanation, changeChallengeCode, emptyArchive, recordEvaluation, selectChallenge, skipChallenge, validateArchive } from '../src/study/history';
+import { addChallenge, addChallengeWithTutorExplanation, appendTutorReplyWithActivities, setQuizAnswer, changeChallengeCode, emptyArchive, recordEvaluation, selectChallenge, skipChallenge, validateArchive } from '../src/study/history';
 import type { LearningSession } from '../src/shared/types';
 
 const makeSession = (title: string, topicIndex = 0): LearningSession => ({
@@ -72,6 +72,21 @@ describe('challenge history state', () => {
     expect(advanced.messages[1].challengeId).toBe(advanced.entries[1].id);
     expect(advanced.messages[1].content).toContain('After skip');
     expect(validateArchive(advanced)).toEqual(advanced);
+  });
+
+  it('stores multiple-choice checks without creating coding challenges and persists selected answers', () => {
+    const fence = String.fromCharCode(96).repeat(3);
+    const content = 'What is a reference?\\n\\n' + fence + 'studyrepo-quiz\\n' +
+      JSON.stringify({question:'What does & do in a parameter?',options:['Copy','Reference'],answer:1,explanation:'It passes a reference.'}) +
+      '\\n' + fence;
+    const archive = appendTutorReplyWithActivities(emptyArchive(), content);
+    expect(archive.entries).toHaveLength(0);
+    expect(archive.activities).toHaveLength(1);
+    expect(archive.messages[0].activityIds).toEqual([archive.activities![0].id]);
+    const answered = setQuizAnswer(archive, archive.activities![0].id, 1, true);
+    expect(answered.activities![0]).toMatchObject({selected:1,checked:true});
+    expect(validateArchive(answered)).toEqual(answered);
+    expect(() => validateArchive({...answered, activities:[{...answered.activities![0], answer:99}]})).toThrow();
   });
 
   it('rejects oversized and malformed archives at IPC boundary', () => {
