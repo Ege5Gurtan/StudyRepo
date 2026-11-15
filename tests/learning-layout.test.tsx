@@ -63,9 +63,26 @@ describe('adaptive practice layout', () => {
     expect(html).toContain('data-testid="monaco-editor"');
     expect(html).toContain('Evaluate my solution');
     expect(html).not.toContain('Evaluation criteria');
-    expect(html).toContain('Challenge history');
-    expect(html).toContain('Previous challenge');
+    expect(html).toContain('Learning activity history');
+    expect(html).toContain('Previous activity');
     expect(html).toContain('Similar challenge');
+  });
+  it('shows saved MultipleChoice activity in the same history without opening a code editor', () => {
+    const quiz = { id: 'quiz-1', type: 'MultipleChoice' as const, title: 'What is a reference?',
+      question: 'Which declaration passes by reference?', options: ['int x', 'int& x'], answer: 1,
+      explanation: 'The & parameter is a reference.', selected: 1, checked: true, createdAt: '2026-11-15T08:00:00Z' };
+    const html = renderToStaticMarkup(<LearningWorkspace
+      session={null} challengeId="" entries={[]} activeIndex={-1} attempts={[]}
+      code="" onCodeChange={() => {}} evaluation={null} busy={false} error=""
+      onEvaluate={() => {}} onRestart={() => {}} onAdvance={() => {}}
+      onSkip={() => {}} onNavigate={() => {}} onRestoreAttempt={() => {}}
+      onShowTutor={() => {}} selectedQuizId={quiz.id} quizActivities={[quiz]}
+      onOpenQuiz={() => {}} onQuizChange={() => {}}/>);
+    expect(html).toContain('Learning activity history');
+    expect(html).toContain('MultipleChoice');
+    expect(html).toContain('Which declaration passes by reference?');
+    expect(html).toContain('Correct!');
+    expect(html).not.toContain('data-testid="monaco-editor"');
   });
   it('offers a toggle for expanded AI Tutor reading mode', () => {
     const html = renderToStaticMarkup(<TutorPanel repository="/repo" context="Practice" code="" expanded={true} onToggleExpanded={() => {}} messages={[]} />);
