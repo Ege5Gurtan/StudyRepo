@@ -50,10 +50,19 @@ export function RichTutorMessage({ content }: Props) {
       // not execute code. Sanitize the resulting markup before insertion.
       void monaco.editor.colorize(raw, language, { tabSize: 2 }).then(highlighted => {
         if (disposed || !code.isConnected) return;
-        code.innerHTML = DOMPurify.sanitize(highlighted, {
+        const sanitized = DOMPurify.sanitize(highlighted, {
           ALLOWED_TAGS: ['span', 'br'],
           ALLOWED_ATTR: ['class', 'style']
         });
+        // The renderer must never replace readable source text with empty or
+        // incomplete highlighted HTML (a frequent failure with unsupported grammars).
+        const candidate = document.createElement('span');
+        candidate.innerHTML = sanitized;
+        const normalized = (value: string) => value.replace(/\s+/g, '');
+        if (normalized(candidate.textContent ?? '') === normalized(raw) && raw.trim()) {
+          code.innerHTML = sanitized;
+        } // Otherwise keep the original, readable fenced code.
+
       }).catch(() => { /* plain code remains readable */ });
     });
 
