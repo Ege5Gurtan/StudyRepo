@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, mkdir, writeFile, rm, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { sourceCandidates, retrieveLearningContext, validateGenerateRequest, parseLesson, validateEvaluation, generateLesson, evaluateSolution } from '../electron/learning';
+import { sourceCandidates, isGeneratedSourcePath, retrieveLearningContext, validateGenerateRequest, parseLesson, validateEvaluation, generateLesson, evaluateSolution } from '../electron/learning';
 
 const lesson = {
   topics: [{ id: 'functions', title: 'Functions', objective: 'Learn function parameters.' }],
@@ -29,6 +29,25 @@ describe('adaptive learning', () => {
         { name: 'note.md', path: 'src/note.md', type: 'file' }
       ] }
     ])).toEqual(['src/game.js']);
+  });
+
+  it('excludes generated Unreal code and ranks authored C++ above C# build rules', async () => {
+    expect(isGeneratedSourcePath('Intermediate/Build/Win64/Semicon.gen.cpp')).toBe(true);
+    expect(isGeneratedSourcePath('Source\\\\Semicon\\\\MyActor.generated.h')).toBe(true);
+    expect(isGeneratedSourcePath('Source/Semicon/TerrainObjectGenerator.cpp')).toBe(false);
+    const root = await realpath(await mkdtemp(path.join(os.tmpdir(), 'studyrepo-cpp-')));
+    try {
+      await mkdir(path.join(root, 'Source', 'Semicon'), { recursive: true });
+      await mkdir(path.join(root, 'Intermediate', 'Build'), { recursive: true });
+      await writeFile(path.join(root, 'Source', 'Semicon', 'Semicon.Target.cs'), 'public class SemiconTarget {}');
+      await writeFile(path.join(root, 'Source', 'Semicon', 'TerrainObjectGenerator.cpp'), 'int32 FloorDivCells(int32 x) { return x; }');
+      await writeFile(path.join(root, 'Intermediate', 'Build', 'TerrainObjectGenerator.gen.cpp'), 'GENERATED_BODY');
+      const files = await retrieveLearningContext(root, 'help me learn C++ in this repository');
+      expect(files[0].file).toMatch(/TerrainObjectGenerator\\.cpp$/);
+      expect(files.every(f => !f.file.includes('Intermediate'))).toBe(true);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 
   it('rejects oversized learning goals and malformed modes', () => {
