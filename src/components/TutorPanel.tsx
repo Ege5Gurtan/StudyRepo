@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ChallengeHistoryEntry, MultipleChoiceActivity, TutorMessage } from '../shared/types';
 import { withStudentMessage, withTutorReply } from '../study/chat-messages';
 import { TutorLessonContent } from './TutorLessonContent';
+import { CopyTutorMessageButton } from './CopyTutorMessageButton';
 import { parseTutorSourceTrace } from '../study/source-trace';
 
 interface Props {
@@ -109,6 +110,7 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
             {sources.map((source, sourceIndex) => <li key={sourceIndex}><button type="button" onClick={() => onOpenSource?.(source.file, source.startLine)}
               title="Open verified source in Explorer">{source.file}:{source.startLine}–{source.endLine} ↗</button></li>)}
           </ul></details>}
+          <div className="tutor-message-controls"><CopyTutorMessageButton message={message}/></div>
           {message.challengeId && challengeEntries.some(entry => entry.id === message.challengeId) && <button type="button" className="tutor-message-challenge-link" onClick={() => onOpenChallenge?.(challengeEntries.findIndex(entry => entry.id === message.challengeId))}>Open linked challenge ↗</button>}
         </div>;
       })}
