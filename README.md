@@ -190,3 +190,7 @@ The Tutor can optionally embed repository-agnostic **knowledge-check quizzes** a
 ## More detailed tutoring responses
 
 Tutor Q&A now uses a larger response budget (3,600 output tokens) and up to 60 seconds for replies. Follow-ups accept prior longer assistant answers while bounding historical content sent to the model. Structured lesson generation also allows longer explanations. Token usage and latency may increase; generation remains constrained by available source excerpts and model behavior.
+
+### More diagram types
+
+Lessons can now also include validated `studyrepo-steps` (clickable execution walkthroughs) and `studyrepo-memory` (selectable values/references illustration) blocks. These work across languages and frameworks; they are conceptual educational visuals and are not live execution, actual stack/heap inspection, or image generation.
