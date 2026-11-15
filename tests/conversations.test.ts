@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addChallenge, emptyArchive } from '../src/study/history';
+import { addChallenge, appendTutorReplyWithActivities, emptyArchive } from '../src/study/history';
 import { appendConversationMessage, changeConversationArchive, conversationTitle, deleteConversation, emptyConversations, migrateLegacyArchive, newConversation, renameConversation, selectConversation, titleConversationIfNew, updateConversationById, validateConversationStore } from '../src/study/conversations';
 import type { LearningSession } from '../src/shared/types';
 
@@ -67,6 +67,23 @@ describe('repository-scoped conversations', () => {
     expect(store.conversations).toHaveLength(1);
     expect(store.conversations[0].archive).toEqual(old);
     expect(store.conversations[0].title).toBe('Learn arrays');
+  });
+
+  it('round-trips saved quizzes independently between conversations', () => {
+    const fence = String.fromCharCode(96).repeat(3);
+    const question = fence + 'studyrepo-quiz\n' + JSON.stringify({
+      question: 'What is a reference?', options: ['A copy', 'An alias'],
+      answer: 1, explanation: 'References alias existing objects.'
+    }) + '\n' + fence;
+    let store = newConversation(emptyConversations());
+    const first = store.activeId!;
+    store = updateConversationById(store, first, archive => appendTutorReplyWithActivities(archive, question));
+    store = newConversation(store);
+    const second = store.activeId!;
+    const persisted = validateConversationStore(JSON.parse(JSON.stringify(store)));
+    expect(persisted.conversations.find(c => c.id === first)?.archive.activities).toHaveLength(1);
+    expect(persisted.conversations.find(c => c.id === second)?.archive.activities).toBeUndefined();
+    expect(persisted.conversations.find(c => c.id === first)?.archive.messages[0].activityIds).toHaveLength(1);
   });
 
   it('renames, deletes and validates conversations without mixing archives', () => {

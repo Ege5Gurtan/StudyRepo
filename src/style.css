@@ -503,3 +503,15 @@ input { accent-color: #8270e4; }
   .app > main > .tutor-panel.tutor-expanded { width: 100%; padding: 14px; }
   .tutor-panel.tutor-expanded .tutor-rich-text { font-size: 14px; }
 }
+
+/* Mixed learning history: exercises are optional, comprehension checks are saved. */
+.learning-welcome { flex-direction: column; gap: 15px; }
+.learning-welcome .challenge-history { width: 100%; flex: 0 0 auto; }
+.activity-history-type { flex: 0 0 auto; font-size: 10px; border: 1px solid var(--border); border-radius: 5px; padding: 3px 5px; color: var(--accent); }
+.learning-quiz-focus { overflow: auto; min-height: 0; flex: 1; padding: 16px; border: 1px solid var(--border); border-radius: 9px; background: var(--card); }
+.learning-quiz-focus .tutor-learning-widget { max-width: 720px; }
+.learning-quiz-focus > button { border: 1px solid var(--border); border-radius: 7px; padding: 9px 12px; background: var(--side); color: var(--accent); cursor: pointer; }
+
+/* Keep code readable even if syntax tokenization is unavailable. */
+.tutor-rich-text pre code { min-height: 1.4em; color: #e2e8f0; }
+.tutor-rich-text pre code span { background: transparent; }

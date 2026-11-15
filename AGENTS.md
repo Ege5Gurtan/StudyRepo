@@ -109,3 +109,10 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 
 - The expanded reading mode is App-level state passed into `TutorPanel`, not a distinct chat route or another Tutor instance. Existing pending requests, chat persistence and challenge links must keep working while toggling.
 - `src/style.css` expands the panel over the existing workspace, with an accessible return-to-code control. Never unmount Monaco or reset conversation history merely to change widths.
+
+## Explanation-first tutoring and mixed activities
+
+- A first general learning prompt goes through the normal Tutor action route with bounded, allowlisted source samples, not automatic `generateLesson`. Only explicit coding-challenge requests can call the challenge tool; multiple-choice requests must remain conversational.
+- `LearningArchive.entries` stays the legacy coding-challenge store; `LearningArchive.activities` is an optional typed array of persisted `MultipleChoice` activities. Never break legacy archives or silently generate coding challenges for each prompt.
+- `appendTutorReplyWithActivities` parses validated quiz blocks, attaches stable quiz IDs to the assistant message and records them atomically. `setQuizAnswer` persists choices independently of coding challenge evaluations.
+- `LearningActivityHistory` combines both kinds chronologically and provides navigation. Keep chat links and in-flight conversation isolation intact; do not treat model-authored code or source as executable instructions.

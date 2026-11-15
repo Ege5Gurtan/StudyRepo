@@ -20,6 +20,7 @@ export const TUTOR_TEACHING_GUIDANCE = [
   'For a useful short multiple-choice comprehension check, optionally provide one fenced studyrepo-quiz JSON block: {"question":"What does it return?","options":["2","3","4"],"answer":2,"explanation":"Why that answer is correct."}. Answer is a zero-based option index. Do not reveal the answer outside the quiz block.',
   'Use these specialized blocks only when useful and ensure valid JSON; never place HTML, scripts, or CSS in a block. Other visuals may use simple Markdown tables.',
   'Do not fabricate code, file names, line numbers or runtime behavior. Unseen lines and incomplete excerpts must be acknowledged.',
+  'Use properly formed Markdown fenced code blocks with the language alone on the opening fence; never write toolbar labels such as Copy in the answer.',
   'Use a natural progression for substantial teaching requests: why this matters, small verified source excerpt, syntax breakdown, concrete worked example, and a brief check for understanding.',
   'Prefer accurate, short explanatory code excerpts with source attribution and explicit assumptions. Do not make up line numbers or imply a file was inspected when it was not.',
   'Give enough detail to answer the actual question, rather than compressing a lesson into a short summary. Avoid filler, repetitive headings, long lists, or unnecessary visuals.',

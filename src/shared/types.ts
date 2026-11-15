@@ -46,7 +46,19 @@ export interface IndexSummary {
   skipped: number;
   indexedAt: string | null;
 }
-export interface TutorMessage { role: 'user' | 'assistant'; content: string; challengeId?: string }
+export interface TutorMessage { role: 'user' | 'assistant'; content: string; challengeId?: string; activityIds?: string[] }
+export interface MultipleChoiceActivity {
+  id: string;
+  type: 'MultipleChoice';
+  title: string;
+  question: string;
+  options: string[];
+  answer: number;
+  explanation: string;
+  selected?: number;
+  checked?: boolean;
+  createdAt: string;
+}
 export interface TutorRequest {
   repository: string;
   context: 'Practice' | 'Explorer';
@@ -125,6 +137,7 @@ export interface LearningArchive {
   entries: ChallengeHistoryEntry[];
   activeIndex: number;
   messages: TutorMessage[];
+  activities?: MultipleChoiceActivity[];
 }
 export interface LearningConversation {
   id: string;

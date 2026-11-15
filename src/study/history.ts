@@ -1,4 +1,5 @@
 import type { ChallengeHistoryEntry, LearningArchive, LearningEvaluation, LearningSession, TutorMessage } from '../shared/types';
+import { parseLessonBlocks } from './lesson-blocks';
 
 export const emptyArchive = (): LearningArchive => ({ entries: [], activeIndex: -1, messages: [] });
 
@@ -8,6 +9,32 @@ export function addChallenge(archive: LearningArchive, session: LearningSession)
     attempts: [], status: 'active', createdAt: new Date().toISOString()
   };
   return { ...archive, entries: [...archive.entries, entry], activeIndex: archive.entries.length };
+}
+
+// Quizzes are lightweight learning activities, not hidden coding challenges.
+// Each generated check has a stable ID and can be revisited or answered later.
+export function appendTutorReplyWithActivities(archive: LearningArchive, content: string, challengeId?: string): LearningArchive {
+  const quizzes = parseLessonBlocks(content).filter(block => block.type === 'quiz').slice(0, 3);
+  const createdAt = new Date().toISOString();
+  const activities = quizzes.map(quiz => ({
+    id: crypto.randomUUID(), type: 'MultipleChoice' as const, title: quiz.question.slice(0, 100),
+    question: quiz.question, options: quiz.options, answer: quiz.answer,
+    explanation: quiz.explanation, createdAt
+  }));
+  const message: TutorMessage = { role: 'assistant', content };
+  if (challengeId) message.challengeId = challengeId;
+  if (activities.length) message.activityIds = activities.map(activity => activity.id);
+  return {
+    ...archive,
+    activities: [...(archive.activities ?? []), ...activities],
+    messages: [...archive.messages, message].slice(-40)
+  };
+}
+
+export function setQuizAnswer(archive: LearningArchive, id: string, selected: number, checked: boolean): LearningArchive {
+  return { ...archive, activities: (archive.activities ?? []).map(activity =>
+    activity.id === id && Number.isInteger(selected) && selected >= 0 && selected < activity.options.length
+      ? { ...activity, selected, checked } : activity) };
 }
 
 // For challenges started by workspace actions (Skip / Next / Similar), persist
@@ -58,9 +85,23 @@ export function validateArchive(value: unknown): LearningArchive {
     (archive.entries.length === 0 && archive.activeIndex !== -1) ||
     (archive.entries.length > 0 && archive.activeIndex === -1)) throw new Error('Invalid challenge history.');
   if (!Array.isArray(archive.messages) || archive.messages.length > 40 || !archive.messages.every(m =>
-    !!m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.length <= 16000 &&
-    (m.challengeId === undefined || (typeof m.challengeId === 'string' && m.challengeId.length <= 100))
+    !!m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.length <= 20000 &&
+    (m.challengeId === undefined || (typeof m.challengeId === 'string' && m.challengeId.length <= 100)) &&
+    (m.activityIds === undefined || (Array.isArray(m.activityIds) && m.activityIds.length <= 3 &&
+      m.activityIds.every(id => typeof id === 'string' && id.length <= 100)))
   )) throw new Error('Invalid tutor messages.');
+  if (archive.activities !== undefined && (!Array.isArray(archive.activities) || archive.activities.length > 10000 ||
+    !archive.activities.every(a => a && a.type === 'MultipleChoice' && typeof a.id === 'string' && a.id.length > 0 && a.id.length <= 100 &&
+      typeof a.title === 'string' && a.title.length <= 100 && typeof a.question === 'string' && a.question.length <= 500 &&
+      Array.isArray(a.options) && a.options.length >= 2 && a.options.length <= 5 &&
+      a.options.every(o => typeof o === 'string' && o.length <= 200) &&
+      Number.isInteger(a.answer) && a.answer >= 0 && a.answer < a.options.length &&
+      typeof a.explanation === 'string' && a.explanation.length <= 800 &&
+      typeof a.createdAt === 'string' && a.createdAt.length <= 64 &&
+      (a.selected === undefined || (Number.isInteger(a.selected) && a.selected >= 0 && a.selected < a.options.length)) &&
+      (a.checked === undefined || typeof a.checked === 'boolean')))) throw new Error('Invalid multiple-choice activity history.');
+  const ids = new Set((archive.activities ?? []).map(a => a.id));
+  if (ids.size !== (archive.activities ?? []).length) throw new Error('Duplicate activity ID.');
   for (const entry of archive.entries) {
     if (!entry || typeof entry.id !== 'string' || entry.id.length > 100 ||
       (entry.status !== 'active' && entry.status !== 'skipped') ||

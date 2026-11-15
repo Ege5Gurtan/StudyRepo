@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ChallengeHistoryEntry, TutorMessage } from '../shared/types';
+import type { ChallengeHistoryEntry, MultipleChoiceActivity, TutorMessage } from '../shared/types';
 import { withStudentMessage, withTutorReply } from '../study/chat-messages';
 import { TutorLessonContent } from './TutorLessonContent';
 
@@ -10,9 +10,10 @@ interface Props {
   expanded?: boolean;
   onToggleExpanded?: () => void;
   learningStarted?: boolean;
-  onStartLearning?: (goal: string) => Promise<string>;
   onGenerateChallenges?: (request: string, scope: 'single' | 'set') => Promise<string>;
   messages?: TutorMessage[];
+  quizActivities?: MultipleChoiceActivity[];
+  onQuizChange?: (id: string, selected: number, checked: boolean) => void;
   pending?: boolean;
   onSendMessage?: (question: string) => void;
   onMessagesChange?: (messages: TutorMessage[]) => void;
@@ -26,7 +27,7 @@ interface Props {
   onOpenSource?: (file: string, line: number) => void;
 }
 
-export function TutorPanel({ repository, context, code, sourceFile, diagnostics = [], hidden = false, expanded = false, onToggleExpanded, learningStarted = true, onStartLearning, onGenerateChallenges, messages: controlledMessages, onMessagesChange, pending = false, onSendMessage, activeChallenge, challengeEntries = [], focusChallengeId, onOpenChallenge, onOpenSource }: Props) {
+export function TutorPanel({ repository, context, code, sourceFile, diagnostics = [], hidden = false, expanded = false, onToggleExpanded, learningStarted = true, onGenerateChallenges, messages: controlledMessages, quizActivities = [], onQuizChange, onMessagesChange, pending = false, onSendMessage, activeChallenge, challengeEntries = [], focusChallengeId, onOpenChallenge, onOpenSource }: Props) {
   const chatRef = useRef<HTMLDivElement>(null);
   const instructionsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -55,9 +56,7 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
     setBusy(true);
     setError('');
     try {
-      const answer = !learningStarted && onStartLearning
-        ? await onStartLearning(q)
-        : context === 'Practice' && onGenerateChallenges
+      const answer = context === 'Practice' && onGenerateChallenges
           ? await (async () => {
               const action = await window.studyRepo.askTutorWithActions({
                 repository, context, code: code.slice(0, 12000), sourceFile,
@@ -100,19 +99,20 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
         </details>
         {activeChallenge.session.lesson.references.length > 0 && <div className="tutor-challenge-sources">{activeChallenge.session.lesson.references.map((ref, index) => <button key={index} onClick={() => onOpenSource?.(ref.file, ref.startLine)}>{ref.file}:{ref.startLine}–{ref.endLine} ↗</button>)}</div>}
       </div>}
-      {messages.length === 0 && <p className="muted">Tell me what you'd like to study, or ask about your current challenge. I'll guide you through the reasoning.</p>}
-      {messages.map((message, index) => <div className={`tutor-message ${message.role === 'user' ? 'student' : 'tutor'}`} key={index}>{message.role === 'assistant' ? <TutorLessonContent content={message.content}/> : message.content}{message.challengeId && challengeEntries.some(entry => entry.id === message.challengeId) && <button type="button" className="tutor-message-challenge-link" onClick={() => onOpenChallenge?.(challengeEntries.findIndex(entry => entry.id === message.challengeId))}>Open linked challenge ↗</button>}</div>)}
+      {messages.length === 0 && <p className="muted">Ask about this repository, a programming concept, or a source file. We'll start by exploring the code; exercises are optional.</p>}
+      {messages.map((message, index) => <div id={'tutor-message-' + index} className={`tutor-message ${message.role === 'user' ? 'student' : 'tutor'}`} key={index}>{message.role === 'assistant' ? <TutorLessonContent content={message.content} quizActivities={(message.activityIds ?? []).map(id => quizActivities.find(a => a.id === id)).filter((a): a is MultipleChoiceActivity => !!a)} onQuizChange={onQuizChange}/> : message.content}{message.challengeId && challengeEntries.some(entry => entry.id === message.challengeId) && <button type="button" className="tutor-message-challenge-link" onClick={() => onOpenChallenge?.(challengeEntries.findIndex(entry => entry.id === message.challengeId))}>Open linked challenge ↗</button>}</div>)}
       {(busy || pending) && <p role="status" className="muted">Thinking…</p>}
     </div>
     {error && <p className="tutor-error" role="alert">{error} <button onClick={() => { void send(messages.at(-1)?.role === 'user' ? messages.at(-1)?.content ?? '' : '', true); }}>Retry</button></p>}
     <div className="tutor-actions">
-      {learningStarted && context === 'Practice' && onGenerateChallenges && <button disabled={busy || pending} onClick={() => { void send('Give me another set of coding challenges.'); }}>Generate challenges</button>}
+      {context === 'Practice' && <button disabled={busy || pending} onClick={() => { void send('Create a coding challenge using this repository.'); }}>Coding challenge</button>}
+      {context === 'Practice' && <button disabled={busy || pending} onClick={() => { void send('Ask me a multiple-choice question about the concepts we have discussed.'); }}>Multiple choice</button>}
       {learningStarted && <button disabled={busy} onClick={() => { void send('Give me a hint, without revealing the full solution.'); }}>Give hint</button>}
-      {learningStarted && <button disabled={busy} onClick={() => { void send('Explain the programming concepts in this code.'); }}>Explain concepts</button>}
+      {<button disabled={busy || pending} onClick={() => { void send('Explain a useful beginner programming concept from this repository.'); }}>Explain concepts</button>}
       {diagnostics.length > 0 && <button disabled={busy} onClick={() => { void send('Explain these test diagnostics and guide me toward fixing them.'); }}>Explain errors</button>}
     </div>
     <form className="tutor-compose" onSubmit={event => { event.preventDefault(); void send(input); }}>
-      <input aria-label="Ask AI Tutor" maxLength={3000} value={input} disabled={busy} onChange={event => setInput(event.target.value)} placeholder={!learningStarted ? 'What would you like to learn?' : 'Ask about this code…'} />
+      <input aria-label="Ask AI Tutor" maxLength={3000} value={input} disabled={busy} onChange={event => setInput(event.target.value)} placeholder={!learningStarted ? 'Ask about the repository or a concept…' : 'Ask about this code…'} />
       <button type="submit" disabled={busy || !input.trim()} aria-label="Send message">➤</button>
     </form>
     <small className="muted">OpenAI API · Sends the current code context and recent messages. Requires OPENAI_API_KEY.</small>

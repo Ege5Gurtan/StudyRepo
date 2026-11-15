@@ -58,7 +58,7 @@ A student can **Skip to next topic** without passing the current challenge, incl
 
 ## Adaptive AI learning sessions (experimental)
 
-Import a repository and open **Practice**. Write your learning goal in the AI Tutor chat, such as "I want to learn JavaScript functions from this project. I am a beginner." StudyRepo selects a few relevant source snippets (up to three files), asks the configured OpenAI model to propose a small topic sequence, and creates a standalone challenge based on repository code. The explanation includes clickable references to verified source lines.
+Import a repository and open **Practice**. Write your learning goal in the AI Tutor chat, such as "I want to learn JavaScript functions from this project. I am a beginner." StudyRepo samples a few relevant, allowlisted source files and explains useful code and concepts first. You can ask follow-up questions, request a multiple-choice check, or explicitly start a coding challenge. Source sampling is partial; the Tutor does not claim to have read the whole repository.
 
 Write code in the editable scratchpad and select **Evaluate my solution** for an AI-only review (no compilation or runtime). After an AI review passes, choose a similar challenge or the next topic. The Tutor remains available for questions throughout the exercise. Messages such as **"Give me another set of challenges"** (or the **Generate challenges** quick action) create a new short learning plan and place its first challenge in Monaco instead of merely listing challenges in chat. Each subsequent challenge is generated when reached; ordinary questions remain conversational. Student and tutor messages are both displayed.
 
@@ -198,3 +198,9 @@ Lessons can now also include validated `studyrepo-steps` (clickable execution wa
 ## AI Tutor reading mode
 
 Use **Expand** in the AI Tutor header to switch from the compact code-side panel to a wider reading overlay with larger typography and more room for examples, code blocks, quizzes and diagrams. **Back to code** restores the narrow panel without discarding drafts or conversations. The code editor remains mounted behind the expanded panel; reading mode intentionally covers some of the workspace. The preference is kept in memory while the app is open.
+
+## Explanation-first learning and activity history
+
+StudyRepo no longer creates a coding challenge automatically when someone starts a conversation with a general learning goal. The Tutor first answers using a bounded selection of safe source excerpts, with optional knowledge-check questions. Users can explicitly ask for a coding challenge, choose the **Coding challenge** quick action, or request **Multiple choice** instead.
+
+Comprehension quizzes are stored separately from coding challenges in the same local conversation archive. **Activities** history distinguishes `Challenge` and `MultipleChoice`, shows answer status, and supports revisiting a saved quiz. Existing challenge records and code drafts remain compatible. This first version records quiz selections; it does not grade coding ability, award points, or execute repository code.
