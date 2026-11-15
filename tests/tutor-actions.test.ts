@@ -39,10 +39,11 @@ describe('structured tutor actions', () => {
     expect(await askTutorWithActions(base)).toEqual({ type: 'generate_challenge', focus: 'tile mechanics', scope: 'single' });
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://api.openai.com/v1/responses');
-    const sent = JSON.parse(String(init.body)) as { store: boolean; tools: { name: string }[]; tool_choice: string; parallel_tool_calls: boolean };
+    const sent = JSON.parse(String(init.body)) as { store: boolean; tools: { name: string }[]; tool_choice: string; parallel_tool_calls: boolean; max_output_tokens: number };
     expect(sent.store).toBe(false);
     expect(sent.tool_choice).toBe('required');
     expect(sent.parallel_tool_calls).toBe(false);
+    expect(sent.max_output_tokens).toBeGreaterThan(1200);
     expect(sent.tools.map(t => t.name)).toEqual(['generate_challenge']);
   });
   it('requires an action for explicit imperative requests but not for ordinary explanations', () => {

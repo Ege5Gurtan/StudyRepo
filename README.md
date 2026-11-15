@@ -186,3 +186,7 @@ If a credential is found in a commit, **revoke or rotate it immediately**. Delet
 ## Interactive Tutor lessons
 
 The Tutor can optionally embed repository-agnostic **knowledge-check quizzes** and **concept/flow diagrams** within Markdown. Validated `studyrepo-quiz` and `studyrepo-diagram` JSON blocks render through predefined React components. Diagrams model a small set of labelled nodes and relationships, suitable for explanations across many languages and repositories; the AI must ground every relationship in supplied source context. Invalid blocks fall back to inert code. There is no model-authored executable SVG, HTML, JavaScript, or arbitrary component code. These are not general image generation or code execution. Quizzes are ungraded comprehension checks separate from coding challenges.
+
+## More detailed tutoring responses
+
+Tutor Q&A now uses a larger response budget (3,600 output tokens) and up to 60 seconds for replies. Follow-ups accept prior longer assistant answers while bounding historical content sent to the model. Structured lesson generation also allows longer explanations. Token usage and latency may increase; generation remains constrained by available source excerpts and model behavior.
