@@ -81,7 +81,7 @@ export async function askTutorWithActions(requestValue: unknown): Promise<TutorA
     additionalTools: explicitlyRequestsChallenge(request.question) ? challengeTools : [],
     // Explicit coding requests retain the original strict challenge action path.
     toolChoice: explicitlyRequestsChallenge(request.question) ? 'required' : 'auto',
-    requireSourceLookup: !explicitlyRequestsChallenge(request.question) && needsRepositoryLookup(request.question)
+    requireSourceLookup: !explicitlyRequestsChallenge(request.question) && (!!request.guidedLesson || needsRepositoryLookup(request.question))
   });
   const action = parseTutorAction(result);
   return action.type === 'message' ? { ...action, text: appendSourceTrace(action.text, result.inspected) } : action;

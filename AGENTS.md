@@ -150,3 +150,11 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - `electron/learning-path.ts` generates structured language-neutral topic roadmaps and one fully grounded lesson at a time via the main-process `learning:guided` IPC. It validates bounded model data and references against source actually read using repository path protections; no coding challenge is generated automatically.
 - `LearningArchive.guidedPath` is optional and stored within the existing conversation archive; `validateArchive` checks it on reload. Do not migrate or erase existing challenge/quiz archives.
 - `src/App.tsx` routes explicit tutorial starts and next-lesson requests to this engine, while preserving free-form tutor replies, challenge requests, conversation-scoped async delivery and existing progress stores. PR B may add dedicated roadmap UI; the initial lesson and roadmap appear in chat.
+
+## Guided lesson → follow-up → challenge alignment
+
+- Keep guided learning entirely in the existing chat UI; do not add a roadmap panel. The active conversation's `guidedPath` is the source of truth for its current objective and verified references.
+- `TutorRequest.guidedLesson` carries a small bounded objective/reference context into normal Practice/Explorer follow-ups, so repository source tools can investigate actual relevant implementations; do not concatenate lesson text with executable source code.
+- Generic single-challenge requests during a guided lesson are handled by the active lesson objective and referenced lines. Explicit unrelated topics, challenge sets, and multiple-choice questions preserve their existing routes.
+- The `generateLesson` guided mode must verify original source files via repository protections and teach/test only ONE concept, not reconstruct a whole constructor or file. Never claim an isolated scratch example compiles against a framework without the needed environment.
+- Preserve existing saved chat histories, stale-response conversation IDs, quizzes, and challenge history. Add tests when changing lesson alignment behavior.
