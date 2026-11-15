@@ -5,12 +5,12 @@ import type { TutorMessage } from '../src/shared/types';
 
 describe('AI Tutor message copy', () => {
   it('copies user messages exactly, preserving their newlines and code', () => {
-    const message: TutorMessage = { role: 'user', content: 'Why?\n\n\`\`\`cpp\nint x = 2;\n\`\`\`' };
+    const message: TutorMessage = { role: 'user', content: 'Why?\n\n```cpp\nint x = 2;\n```' };
     expect(messageTextToCopy(message)).toBe(message.content);
   });
 
   it('copies original AI Markdown while excluding internal source provenance', () => {
-    const body = '## Explanation\n\n\`\`\`cpp\nint x = 2;\n\`\`\`';
+    const body = '## Explanation\n\n```cpp\nint x = 2;\n```';
     const suffix = '\n\n<!-- studyrepo-source-reads:' +
       encodeURIComponent(JSON.stringify([{ file: 'Source/Example.cpp', startLine: 1, endLine: 5 }])) + ' -->';
     const message: TutorMessage = { role: 'assistant', content: body + suffix };
