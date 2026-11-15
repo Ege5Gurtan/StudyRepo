@@ -12,7 +12,7 @@ import { SymbolExplorer } from './components/SymbolExplorer';
 import { LearningWorkspace } from './components/LearningWorkspace';
 import { TutorPanel } from './components/TutorPanel';
 import { addChallenge, addChallengeWithTutorExplanation, changeChallengeCode, recordEvaluation, selectChallenge, setChatMessages, appendTutorReplyWithActivities, setQuizAnswer } from './study/history';
-import { emptyConversations, newConversation, selectConversation, changeConversationArchive, updateConversationById, titleConversationIfNew, appendConversationMessage, nameConversationById, renameConversation, deleteConversation } from './study/conversations';
+import { emptyConversations, newConversation, selectConversation, changeConversationArchive, updateConversationById, appendConversationMessage, nameConversationById, renameConversation, deleteConversation } from './study/conversations';
 
 self.MonacoEnvironment = {
   getWorker(_workerId, label) {
@@ -134,22 +134,6 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [conversationStore, archiveReady, scan?.repository.path]);
 
-  async function startLearning(goal: string): Promise<string> {
-    if (!scan || !archiveReady) throw new Error('Import a repository first.');
-    const epoch = learningEpoch.current;
-    const conversationId = conversationStore.activeId;
-    if (!conversationId) throw new Error('Create a conversation first.');
-    setLearningBusy(true); setLearningError('');
-    try {
-      const session = await window.studyRepo.generateLesson({ repository: scan.repository.path, goal, mode: 'start' });
-      if (epoch !== learningEpoch.current) throw new Error('Repository changed; learning request cancelled.');
-      setConversationStore(old => titleConversationIfNew(
-        updateConversationById(old, conversationId, current => addChallenge(current, session)), goal));
-      setAwaitingGoal(false);
-      return session.lesson.introduction + '\n\n' + session.lesson.explanation;
-    } catch (e) { if (epoch === learningEpoch.current) setLearningError(String(e)); throw e; }
-    finally { if (epoch === learningEpoch.current) setLearningBusy(false); }
-  }
   async function evaluateCode() {
     if (!scan || !activeEntry || !archiveReady) return;
     const epoch = learningEpoch.current;
@@ -222,6 +206,7 @@ export default function App() {
       : tutorLearningCode;
     const requestFile = requestContext === 'Explorer' ? current?.path : undefined;
     setConversationStore(old => nameConversationById(appendConversationMessage(old, conversationId, { role: 'user', content: q }), conversationId, q));
+    if (!previousEntry && requestContext === 'Practice') setTutorExpanded(true);
     let generatedChallenge = false;
     try {
       let answer: string;
@@ -377,7 +362,6 @@ export default function App() {
         sourceFile={page === 'Explorer' ? current?.path : undefined}
         code={page === 'Explorer' ? (selection.code || current?.content.slice(0, 12000) || '') : tutorLearningCode}
         learningStarted={!!learning}
-        onStartLearning={page === 'Practice' ? startLearning : undefined}
         onGenerateChallenges={page === 'Practice' ? generateChallengesFromChat : undefined}
         messages={archive.messages}
         quizActivities={archive.activities ?? []}
