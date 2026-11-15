@@ -208,3 +208,7 @@ Comprehension quizzes are stored separately from coding challenges in the same l
 ### Source readability fixes
 
 Code snippets now show a single language/Copy toolbar even after repeated rendering. Initial C++ teaching searches prefer handwritten C++ sources over C# build configuration and ignore generated Unreal build outputs; this does not change repository files or how explicit named-file requests work.
+
+### Read-only repository investigation
+
+The Practice and Explorer AI tutors can now request additional verified source context with bounded `search_code`, `find_symbol`, and `read_source` tools. Tools only search allowlisted local source files, use safe read-only file access, and return relevant source excerpts with paths and line numbers. Search is heuristic and capped per answer (four retrieval rounds, eight source tool calls); it is not a complete compiler call graph or a guarantee of full repository coverage. Code excerpts are sent to the model when requested and must be treated as potentially sensitive.

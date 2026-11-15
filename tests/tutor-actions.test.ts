@@ -62,7 +62,7 @@ describe('structured tutor actions', () => {
     const result = await askTutorWithActions({ ...base, question: 'Explain loops to me' });
     expect(result).toEqual({ type: 'message', text: 'A loop iterates.' });
     const body = JSON.parse(String((mock.mock.calls[0] as unknown as [string, RequestInit])[1].body)) as { tool_choice: string };
-    expect(body.tool_choice).toBe('none');
+    expect(body.tool_choice).toBe('auto');
   });
 
   it('does not generate challenges for broad learning goals or multiple-choice requests', async () => {
@@ -76,7 +76,7 @@ describe('structured tutor actions', () => {
       expect(result).toEqual({ type: 'message', text: 'Here is a C++ overview.' });
       const [, init] = fetchMock.mock.calls.at(-1)! as unknown as [string, RequestInit];
       const sent = JSON.parse(String(init.body)) as { tool_choice: string; instructions: string };
-      expect(sent.tool_choice).toBe('none');
+      expect(sent.tool_choice).toBe('auto');
       expect(sent.instructions).toContain('multiple-choice');
     }
   });

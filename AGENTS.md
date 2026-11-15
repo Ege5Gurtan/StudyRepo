@@ -121,3 +121,9 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 
 - `RichTutorMessage` inserts code toolbars inside React effects; remove existing toolbars and detach new toolbars in the effect cleanup. React StrictMode repeats effects, so rendering must not accumulate duplicate `cpp`/Copy rows.
 - `sourceCandidates` excludes generated Unreal artifacts and build-output directories; C++ learning queries should prioritize `.cpp` and headers over Unreal `.Target.cs` / `.Build.cs` rules. Explicit named-file retrieval remains separately bounded and protected.
+
+## Read-only agentic source retrieval
+
+- `electron/tutor-retrieval.ts` exposes bounded search_code, find_symbol, and read_source model tools to Practice and Explorer. Tools use the scanner allowlist, `readRepositoryFile` security checks, secret redaction, a per-answer call/context budget, and source line references.
+- Never expose arbitrary paths, writes, commands, or unfiltered file bytes. Keep model tool calls validated and replay results with `store: false`.
+- Explicit challenge requests must continue to require the existing generate_challenge action, not source tools. Preserve conversation isolation, source warnings, and regression coverage in `tests/tutor-retrieval.test.ts`.
