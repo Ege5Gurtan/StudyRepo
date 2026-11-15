@@ -138,3 +138,9 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 
 - Every user and assistant message in `TutorPanel` has an accessible Copy button. `CopyTutorMessageButton` copies original message Markdown/plain text, never rendered HTML; strip backend-only source trace metadata from copied assistant messages via `parseTutorSourceTrace`.
 - Keep copy feedback local to the message, handle clipboard failures without modifying conversation history, and preserve the existing per-code-block copy controls.
+
+## Learner-friendly repository tutorials
+
+- Broad repository tutorial prompts in Practice and Explorer must use the existing bounded read-only source tool flow, not preloaded opening-file samples. Keep mandatory coding-challenge actions separate.
+- Centralize tutorial detection and teaching guidance in `electron/tutor.ts` and share them with `electron/tutor-actions.ts`. Teach one fully grounded first lesson plus a short roadmap, with explicit beginner prerequisites, tiny verified excerpts, worked examples and an optional check.
+- Keep implementation/header/caller statements tied to actually inspected source; never imply complete repository coverage. Preserve source traces, safety limits, chat isolation and existing interactive quiz blocks.

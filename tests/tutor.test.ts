@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { askTutor, buildTutorInput, validateTutorRequest } from '../electron/tutor';
+import { askTutor, buildTutorInput, needsRepositoryLookup, requestsRepositoryTutorial, validateTutorRequest } from '../electron/tutor';
 import type { TutorRequest } from '../src/shared/types';
 
 const base: TutorRequest = {
@@ -14,6 +14,14 @@ const base: TutorRequest = {
 afterEach(() => { vi.unstubAllGlobals(); });
 
 describe('AI tutor', () => {
+  it('detects broad repository tutorials without forcing lookups for unrelated questions', () => {
+    expect(requestsRepositoryTutorial('Create a tutorial to better understand the cpp codes in this repo')).toBe(true);
+    expect(requestsRepositoryTutorial('Help me understand this repository and learn C++')).toBe(true);
+    expect(needsRepositoryLookup('Teach me the code in my project')).toBe(true);
+    expect(requestsRepositoryTutorial('Explain my loop')).toBe(false);
+    expect(needsRepositoryLookup('How do references work?')).toBe(false);
+  });
+
   it('rejects invalid and oversized renderer requests', () => {
     expect(() => validateTutorRequest({ ...base, question: ' ' })).toThrow();
     expect(() => validateTutorRequest({ ...base, code: 'x'.repeat(12001) })).toThrow();

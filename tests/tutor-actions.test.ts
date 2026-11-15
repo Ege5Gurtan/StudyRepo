@@ -80,6 +80,25 @@ describe('structured tutor actions', () => {
       expect(sent.instructions).toContain('multiple-choice');
     }
   });
+  it('investigates repository source before generating a broad C++ tutorial', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'test-key');
+    const mock = vi.fn(async () => ({ ok: true, json: async () => ({
+      output: [{ type: 'message', content: [{ type: 'output_text', text: 'Lesson one.' }] }]
+    }) }));
+    vi.stubGlobal('fetch', mock);
+    const reply = await askTutorWithActions({ ...base, code: '', question: 'Create a tutorial to better understand the cpp codes in this repo' });
+    expect(reply).toEqual({ type: 'message', text: 'Lesson one.' });
+    const body = JSON.parse(String((mock.mock.calls[0] as unknown as [string, RequestInit])[1].body)) as {
+      tool_choice: string; tools: { name: string }[]; input: Array<{ content?: string }>; instructions: string
+    };
+    expect(body.tool_choice).toBe('required');
+    expect(body.tools.map(t => t.name)).toContain('read_source');
+    expect(body.tools.map(t => t.name)).toContain('list_source_files');
+    expect(JSON.stringify(body.input)).not.toContain('Partial repository sample');
+    expect(body.instructions).toContain('ONE coherent first lesson');
+    expect(body.instructions).toContain('unfamiliar C++ symbol');
+  });
+
   it('does not allow structured actions outside Practice', async () => {
     await expect(askTutorWithActions({ ...base, context: 'Explorer' })).rejects.toThrow('Practice');
   });
