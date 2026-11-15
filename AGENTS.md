@@ -91,6 +91,6 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 
 ## Interactive Tutor learning blocks
 
-- `src/study/lesson-blocks.ts` parses bounded, strongly validated `studyrepo-quiz` and `studyrepo-grid` fenced JSON. Invalid blocks fall back to Markdown; do not interpret generated JSX, HTML, SVG, CSS or scripts.
-- `src/components/TutorLessonContent.tsx` renders only predefined React quiz and grid widgets and delegates ordinary Markdown to `RichTutorMessage` for sanitization and highlighting.
+- `src/study/lesson-blocks.ts` parses bounded, strongly validated `studyrepo-quiz` and `studyrepo-diagram` fenced JSON. Invalid blocks fall back to Markdown; do not interpret generated JSX, HTML, SVG, CSS or scripts.
+- `src/components/TutorLessonContent.tsx` renders only predefined React quiz and generic node/edge diagram widgets and delegates ordinary Markdown to `RichTutorMessage` for sanitization and highlighting.
 - `electron/tutor.ts` shares structured teaching guidance with the action route. Keep model tools for actual coding challenges separate from ungraded quiz widgets. Preserve chat persistence and source-file links.
