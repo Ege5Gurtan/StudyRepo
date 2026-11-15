@@ -5,7 +5,7 @@ import type { TutorMessage, TutorRequest } from '../src/shared/types';
 const MAX_MESSAGE = 3000;
 const MAX_CODE = 12000;
 const MAX_HISTORY = 10;
-const MAX_ASSISTANT_HISTORY = 16000;
+const MAX_ASSISTANT_HISTORY = 20000;
 export const TUTOR_OUTPUT_TOKENS = 3600;
 export const TUTOR_OUTPUT_CHARS = 20000;
 
