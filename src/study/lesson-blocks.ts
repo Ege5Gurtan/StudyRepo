@@ -1,22 +1,20 @@
 export type LessonBlock =
   | { type: 'markdown'; content: string }
   | { type: 'quiz'; question: string; options: string[]; answer: number; explanation: string }
-  | { type: 'grid'; title: string; a: [number, number]; b: [number, number] };
+  | { type: 'diagram'; title: string; nodes: { id: string; label: string }[]; edges: { from: string; to: string; label?: string }[] };
 
-// Structured lesson blocks are inert data. Never interpret model output as React,
-// HTML, SVG markup, or executable JavaScript.
+// Model-generated diagrams are validated data. No arbitrary SVG, JSX, HTML or code.
 export function parseLessonBlocks(content: string): LessonBlock[] {
   const blocks: LessonBlock[] = [];
-  const pattern = /(^|\n)```studyrepo-(quiz|grid)\s*\n([\s\S]*?)\n```(?=\n|$)/g;
+  const pattern = /(^|\n)```studyrepo-(quiz|diagram)\s*\n([\s\S]*?)\n```(?=\n|$)/g;
   let start = 0;
   for (const match of content.matchAll(pattern)) {
     const index = match.index ?? 0;
     if (index > start) blocks.push({ type: 'markdown', content: content.slice(start, index) });
-    const raw = match[3];
     let parsed: LessonBlock | null = null;
-    if (raw.length <= 4000) {
+    if (match[3].length <= 4000) {
       try {
-        const data: unknown = JSON.parse(raw);
+        const data: unknown = JSON.parse(match[3]);
         if (data && typeof data === 'object' && !Array.isArray(data)) {
           const value = data as Record<string, unknown>;
           if (match[2] === 'quiz' && typeof value.question === 'string' && value.question.length <= 500 &&
@@ -26,14 +24,23 @@ export function parseLessonBlocks(content: string): LessonBlock[] {
             typeof value.explanation === 'string' && value.explanation.length <= 800) {
             parsed = { type: 'quiz', question: value.question, options: value.options as string[], answer: value.answer as number, explanation: value.explanation };
           }
-          const coord = (v: unknown): v is [number, number] =>
-            Array.isArray(v) && v.length === 2 && v.every(n => Number.isInteger(n) && n >= 0 && n <= 5);
-          if (match[2] === 'grid' && typeof value.title === 'string' && value.title.length <= 160 &&
-            coord(value.a) && coord(value.b)) {
-            parsed = { type: 'grid', title: value.title, a: value.a, b: value.b };
+          if (match[2] === 'diagram' && typeof value.title === 'string' && value.title.length <= 160 &&
+            Array.isArray(value.nodes) && value.nodes.length >= 2 && value.nodes.length <= 8 &&
+            value.nodes.every((n: unknown) => n && typeof n === 'object' && typeof (n as {id?:unknown}).id === 'string' &&
+              /^[a-zA-Z0-9_-]{1,24}$/.test((n as {id:string}).id) &&
+              typeof (n as {label?:unknown}).label === 'string' && (n as {label:string}).label.length <= 75) &&
+            Array.isArray(value.edges) && value.edges.length <= 12) {
+            const nodes = value.nodes as { id: string; label: string }[];
+            const ids = new Set(nodes.map(n => n.id));
+            if (ids.size === nodes.length && value.edges.every((e: unknown) =>
+              e && typeof e === 'object' &&
+              ids.has((e as {from:string}).from) && ids.has((e as {to:string}).to) &&
+              ((e as {label?:unknown}).label === undefined || (typeof (e as {label?:unknown}).label === 'string' && ((e as {label:string}).label.length <= 50))))) {
+              parsed = { type: 'diagram', title: value.title, nodes, edges: value.edges as {from:string;to:string;label?:string}[] };
+            }
           }
         }
-      } catch { /* Invalid or unexpected model data is displayed as normal Markdown. */ }
+      } catch { /* Render invalid blocks as inert code via Markdown. */ }
     }
     blocks.push(parsed ?? { type: 'markdown', content: match[0] });
     start = index + match[0].length;
