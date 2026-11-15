@@ -133,3 +133,8 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - Tutor fenced code tokenization must use locally controlled CSS classes, not Monaco inline colors from a mismatched editor theme. Preserve plain-text fallback and inert DOM assembly.
 - Source retrieval can require an initial read-only investigation for codebase-oriented questions; discovery includes list_source_files, with bounded tool calls and source redaction.
 - Only successful read_source operations are recorded in backend-generated source trace metadata. TutorPanel renders a verified file/line list linked to Explorer; existing conversation text and quiz blocks remain compatible.
+
+## AI chat message copying
+
+- Every user and assistant message in `TutorPanel` has an accessible Copy button. `CopyTutorMessageButton` copies original message Markdown/plain text, never rendered HTML; strip backend-only source trace metadata from copied assistant messages via `parseTutorSourceTrace`.
+- Keep copy feedback local to the message, handle clipboard failures without modifying conversation history, and preserve the existing per-code-block copy controls.
