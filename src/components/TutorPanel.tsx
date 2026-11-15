@@ -7,6 +7,8 @@ interface Props {
   repository: string;
   context: 'Practice' | 'Explorer';
   hidden?: boolean;
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
   learningStarted?: boolean;
   onStartLearning?: (goal: string) => Promise<string>;
   onGenerateChallenges?: (request: string, scope: 'single' | 'set') => Promise<string>;
@@ -24,7 +26,7 @@ interface Props {
   onOpenSource?: (file: string, line: number) => void;
 }
 
-export function TutorPanel({ repository, context, code, sourceFile, diagnostics = [], hidden = false, learningStarted = true, onStartLearning, onGenerateChallenges, messages: controlledMessages, onMessagesChange, pending = false, onSendMessage, activeChallenge, challengeEntries = [], focusChallengeId, onOpenChallenge, onOpenSource }: Props) {
+export function TutorPanel({ repository, context, code, sourceFile, diagnostics = [], hidden = false, expanded = false, onToggleExpanded, learningStarted = true, onStartLearning, onGenerateChallenges, messages: controlledMessages, onMessagesChange, pending = false, onSendMessage, activeChallenge, challengeEntries = [], focusChallengeId, onOpenChallenge, onOpenSource }: Props) {
   const chatRef = useRef<HTMLDivElement>(null);
   const instructionsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -78,8 +80,11 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
       setBusy(false);
     }
   }
-  return <aside className={`tutor-panel ${hidden ? "tutor-hidden" : ""}`} aria-label="AI Tutor" aria-hidden={hidden}>
-    <div className="tutor-heading"><span>✦ AI Tutor</span></div>
+  return <aside className={`tutor-panel ${hidden ? "tutor-hidden" : ""} ${expanded ? "tutor-expanded" : ""}`} aria-label="AI Tutor" aria-hidden={hidden}>
+    <div className="tutor-heading"><span>✦ AI Tutor</span>
+      {onToggleExpanded && <button type="button" className="tutor-expand-button" aria-label={expanded ? 'Exit reading mode' : 'Expand AI Tutor for reading'} aria-pressed={expanded}
+        onClick={onToggleExpanded}>{expanded ? '↙ Back to code' : '⤢ Expand'}</button>}
+    </div>
     <div className="tutor-context">{repository} / {context}{sourceFile ? ` / ${sourceFile}` : ''}</div>
     <div className="tutor-chat" aria-live="polite" ref={chatRef}>
       {context === 'Practice' && activeChallenge && <div className="tutor-challenge-details" ref={instructionsRef} tabIndex={-1} aria-label="Current challenge instructions">
