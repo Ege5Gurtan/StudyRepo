@@ -79,7 +79,7 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
     }
   }
   return <aside className={`tutor-panel ${hidden ? "tutor-hidden" : ""}`} aria-label="AI Tutor" aria-hidden={hidden}>
-    <div className="tutor-heading"><span>✦ AI Tutor</span><button className="tutor-clear" onClick={() => { setMessages([]); setError(''); }} disabled={busy || pending || messages.length === 0}>Clear chat</button></div>
+    <div className="tutor-heading"><span>✦ AI Tutor</span></div>
     <div className="tutor-context">{repository} / {context}{sourceFile ? ` / ${sourceFile}` : ''}</div>
     <div className="tutor-chat" aria-live="polite" ref={chatRef}>
       {context === 'Practice' && activeChallenge && <div className="tutor-challenge-details" ref={instructionsRef} tabIndex={-1} aria-label="Current challenge instructions">
