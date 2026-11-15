@@ -1,5 +1,3 @@
-import path from 'node:path';
-
 // Apply the same restrictions to browsing, indexing, and AI retrieval.
 // These checks use path components so a legitimate file such as "keyboard.ts"
 // is not blocked merely because it contains "key".
