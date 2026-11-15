@@ -1,7 +1,6 @@
 import { buildTutorInput, validateTutorRequest, TUTOR_TEACHING_GUIDANCE, TUTOR_OUTPUT_TOKENS, TUTOR_OUTPUT_CHARS } from './tutor';
 import { retrieveNamedFileContext } from './tutor-source';
 import { retrieveLearningContext } from './learning';
-import { redactSecrets } from './security';
 import { runRepositoryTutor } from './tutor-retrieval';
 import type { TutorAction } from '../src/shared/types';
 
