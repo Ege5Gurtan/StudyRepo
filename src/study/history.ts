@@ -1,6 +1,6 @@
 import type { ChallengeHistoryEntry, LearningArchive, LearningEvaluation, LearningSession, TutorMessage } from '../shared/types';
 import { parseLessonBlocks } from './lesson-blocks';
-import { validateGuidedPath } from '../../electron/learning-path';
+import { validateGuidedPath } from './guided-path';
 
 export const emptyArchive = (): LearningArchive => ({ entries: [], activeIndex: -1, messages: [] });
 
