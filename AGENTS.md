@@ -144,3 +144,9 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - Broad repository tutorial prompts in Practice and Explorer must use the existing bounded read-only source tool flow, not preloaded opening-file samples. Keep mandatory coding-challenge actions separate.
 - Centralize tutorial detection and teaching guidance in `electron/tutor.ts` and share them with `electron/tutor-actions.ts`. Teach one fully grounded first lesson plus a short roadmap, with explicit beginner prerequisites, tiny verified excerpts, worked examples and an optional check. Detect tutorial intent independently of specific programming-language names; infer relevant languages and frameworks from inspected source, including mixed-language projects.
 - Keep implementation/header/caller statements tied to actually inspected source; never imply complete repository coverage. Preserve source traces, safety limits, chat isolation and existing interactive quiz blocks.
+
+## Progressive guided learning (PR A)
+
+- `electron/learning-path.ts` generates structured language-neutral topic roadmaps and one fully grounded lesson at a time via the main-process `learning:guided` IPC. It validates bounded model data and references against source actually read using repository path protections; no coding challenge is generated automatically.
+- `LearningArchive.guidedPath` is optional and stored within the existing conversation archive; `validateArchive` checks it on reload. Do not migrate or erase existing challenge/quiz archives.
+- `src/App.tsx` routes explicit tutorial starts and next-lesson requests to this engine, while preserving free-form tutor replies, challenge requests, conversation-scoped async delivery and existing progress stores. PR B may add dedicated roadmap UI; the initial lesson and roadmap appear in chat.

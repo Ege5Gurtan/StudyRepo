@@ -1,5 +1,6 @@
 import type { ChallengeHistoryEntry, LearningArchive, LearningEvaluation, LearningSession, TutorMessage } from '../shared/types';
 import { parseLessonBlocks } from './lesson-blocks';
+import { validateGuidedPath } from './guided-path';
 
 export const emptyArchive = (): LearningArchive => ({ entries: [], activeIndex: -1, messages: [] });
 
@@ -100,6 +101,7 @@ export function validateArchive(value: unknown): LearningArchive {
       typeof a.createdAt === 'string' && a.createdAt.length <= 64 &&
       (a.selected === undefined || (Number.isInteger(a.selected) && a.selected >= 0 && a.selected < a.options.length)) &&
       (a.checked === undefined || typeof a.checked === 'boolean')))) throw new Error('Invalid multiple-choice activity history.');
+  if (archive.guidedPath !== undefined) validateGuidedPath(archive.guidedPath);
   const ids = new Set((archive.activities ?? []).map(a => a.id));
   if (ids.size !== (archive.activities ?? []).length) throw new Error('Duplicate activity ID.');
   for (const entry of archive.entries) {

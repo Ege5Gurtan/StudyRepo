@@ -76,7 +76,7 @@ describe('structured tutor actions', () => {
       expect(result).toEqual({ type: 'message', text: 'Here is a C++ overview.' });
       const [, init] = fetchMock.mock.calls.at(-1)! as unknown as [string, RequestInit];
       const sent = JSON.parse(String(init.body)) as { tool_choice: string; instructions: string };
-      expect(sent.tool_choice).toBe('auto');
+      expect(sent.tool_choice).toBe(question.includes('repository') ? 'required' : 'auto');
       expect(sent.instructions).toContain('multiple-choice');
     }
   });
