@@ -13,7 +13,7 @@ import { LearningWorkspace } from './components/LearningWorkspace';
 import { TutorPanel } from './components/TutorPanel';
 import { addChallenge, addChallengeWithTutorExplanation, changeChallengeCode, recordEvaluation, selectChallenge, setChatMessages, appendTutorReplyWithActivities, setQuizAnswer } from './study/history';
 import { emptyConversations, newConversation, selectConversation, changeConversationArchive, updateConversationById, appendConversationMessage, nameConversationById, renameConversation, deleteConversation } from './study/conversations';
-import { guidedLearningIntent, formatGuidedLesson } from './study/guided-intent';
+import { guidedLearningIntent, formatGuidedLesson, requestsCurrentLessonChallenge } from './study/guided-intent';
 
 self.MonacoEnvironment = {
   getWorker(_workerId, label) {
@@ -207,12 +207,6 @@ export default function App() {
       : tutorLearningCode;
     const requestFile = requestContext === 'Explorer' ? current?.path : undefined;
     const activeGuidedPath = archive.guidedPath;
-    const guidedContext = activeGuidedPath
-      ? '\nCurrent guided roadmap: ' + activeGuidedPath.topics.map((topic, index) =>
-          (index === activeGuidedPath.currentIndex ? '[CURRENT] ' : '') + topic.title).join('; ') +
-        '\nCurrent lesson: ' + activeGuidedPath.lesson.title +
-        '\nCurrent lesson explanation: ' + activeGuidedPath.lesson.explanation.slice(0, 3500)
-      : '';
     setConversationStore(old => nameConversationById(appendConversationMessage(old, conversationId, { role: 'user', content: q }), conversationId, q));
     if (!previousEntry && requestContext === 'Practice') setTutorExpanded(true);
     let generatedChallenge = false;
@@ -226,10 +220,39 @@ export default function App() {
         });
         setConversationStore(old => updateConversationById(old, conversationId, a => ({ ...a, guidedPath: guided })));
         answer = formatGuidedLesson(guided, guidedIntent === 'start');
+      } else if (requestContext === 'Practice' && activeGuidedPath && requestsCurrentLessonChallenge(q)) {
+        const topic = activeGuidedPath.topics[activeGuidedPath.currentIndex];
+        const lesson = await window.studyRepo.generateLesson({
+          repository,
+          goal: activeGuidedPath.goal,
+          mode: 'focused',
+          topics: [{ id: topic.id, title: topic.title, objective: topic.objective }],
+          topicIndex: 0,
+          focus: 'Practice the current guided lesson: ' + topic.objective,
+          guidedLesson: {
+            title: activeGuidedPath.lesson.title,
+            objective: topic.objective,
+            references: activeGuidedPath.lesson.references
+          }
+        });
+        generatedChallenge = true;
+        setConversationStore(old => updateConversationById(old, conversationId, a => addChallenge(a, lesson)));
+        if (conversationRef.current === conversationId) {
+          setAwaitingGoal(false);
+          setSelectedQuizId(null);
+        }
+        answer = [lesson.lesson.introduction, lesson.lesson.explanation,
+          '### Coding challenge: ' + lesson.lesson.challenge.title,
+          lesson.lesson.challenge.description].join('\n\n');
       } else if (requestContext === 'Practice') {
         const action = await window.studyRepo.askTutorWithActions({
-          repository, context: 'Practice', code: (requestCode + guidedContext).slice(0, 12000),
-          question: q, history: previousMessages.slice(-10)
+          repository, context: 'Practice', code: requestCode.slice(0, 12000),
+          question: q, history: previousMessages.slice(-10),
+          guidedLesson: activeGuidedPath ? {
+            title: activeGuidedPath.lesson.title,
+            objective: activeGuidedPath.topics[activeGuidedPath.currentIndex].objective,
+            references: activeGuidedPath.lesson.references
+          } : undefined
         });
         if (action.type === 'message') answer = action.text;
         else {
@@ -258,7 +281,12 @@ export default function App() {
       } else {
         answer = await window.studyRepo.askTutor({
           repository, context: 'Explorer', sourceFile: requestFile,
-          code: (requestCode + guidedContext).slice(0, 12000), question: q, history: previousMessages.slice(-10)
+          code: requestCode.slice(0, 12000), question: q, history: previousMessages.slice(-10),
+          guidedLesson: activeGuidedPath ? {
+            title: activeGuidedPath.lesson.title,
+            objective: activeGuidedPath.topics[activeGuidedPath.currentIndex].objective,
+            references: activeGuidedPath.lesson.references
+          } : undefined
         });
       }
       setConversationStore(old => updateConversationById(old, conversationId, a =>
