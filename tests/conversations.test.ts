@@ -71,10 +71,10 @@ describe('repository-scoped conversations', () => {
 
   it('round-trips saved quizzes independently between conversations', () => {
     const fence = String.fromCharCode(96).repeat(3);
-    const question = fence + 'studyrepo-quiz\\n' + JSON.stringify({
+    const question = fence + 'studyrepo-quiz\n' + JSON.stringify({
       question: 'What is a reference?', options: ['A copy', 'An alias'],
       answer: 1, explanation: 'References alias existing objects.'
-    }) + '\\n' + fence;
+    }) + '\n' + fence;
     let store = newConversation(emptyConversations());
     const first = store.activeId!;
     store = updateConversationById(store, first, archive => appendTutorReplyWithActivities(archive, question));
