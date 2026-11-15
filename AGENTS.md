@@ -116,3 +116,9 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - `LearningArchive.entries` stays the legacy coding-challenge store; `LearningArchive.activities` is an optional typed array of persisted `MultipleChoice` activities. Never break legacy archives or silently generate coding challenges for each prompt.
 - `appendTutorReplyWithActivities` parses validated quiz blocks, attaches stable quiz IDs to the assistant message and records them atomically. `setQuizAnswer` persists choices independently of coding challenge evaluations.
 - `LearningActivityHistory` combines both kinds chronologically and provides navigation. Keep chat links and in-flight conversation isolation intact; do not treat model-authored code or source as executable instructions.
+
+## Read-only agentic source retrieval
+
+- `electron/tutor-retrieval.ts` exposes bounded search_code, find_symbol, and read_source model tools to Practice and Explorer. Tools use the scanner allowlist, `readRepositoryFile` security checks, secret redaction, a per-answer call/context budget, and source line references.
+- Never expose arbitrary paths, writes, commands, or unfiltered file bytes. Keep model tool calls validated and replay results with `store: false`.
+- Explicit challenge requests must continue to require the existing generate_challenge action, not source tools. Preserve conversation isolation, source warnings, and regression coverage in `tests/tutor-retrieval.test.ts`.
