@@ -1,8 +1,8 @@
 import { readRepositoryFile, scanRepository } from './repository';
+import { isSensitivePath } from './security';
 import type { TreeNode, TutorRequest } from '../src/shared/types';
 
 const sourceExtensions = /\.(?:c|cc|cpp|cxx|h|hpp|hxx|ts|tsx|js|jsx|mjs|py|go|rs|java|cs)$/i;
-const protectedPath = /(?:^|[\\/])(?:\.env(?:\..*)?|\.git|node_modules|secrets?|credentials?|private|keys?)(?:[\\/]|$)/i;
 const MAX_EXCERPT = 26000;
 
 export function namedFileInQuestion(question: string): string | null {
@@ -19,7 +19,7 @@ export function findNamedSource(tree: TreeNode[], target: string): string[] {
       if (node.type === 'directory') visit(node.children ?? []);
       else {
         const filename = node.path.replace(/\\/g, '/').toLowerCase();
-        if (sourceExtensions.test(filename) && !protectedPath.test(filename) &&
+        if (sourceExtensions.test(filename) && !isSensitivePath(filename) &&
           (filename === candidate || filename.endsWith('/' + candidate))) matches.push(node.path);
       }
     }

@@ -14,6 +14,8 @@ describe('repository services', () => {
     await mkdir(path.join(root, 'node_modules'));
     await writeFile(path.join(root, 'src', 'app.ts'), 'export const value = 1;');
     await writeFile(path.join(root, 'README.md'), '# Hello');
+    await writeFile(path.join(root, '.env'), 'OPENAI_API_KEY=secret');
+    await writeFile(path.join(root, 'src', 'credentials.json'), '{"token":"secret"}');
     await writeFile(path.join(root, 'node_modules', 'ignored.js'), 'ignored');
     await writeFile(path.join(base, 'outside.txt'), 'private');
     await symlink(path.join(base, 'outside.txt'), path.join(root, 'link.txt'));
@@ -34,6 +36,8 @@ describe('repository services', () => {
     await expect(readRepositoryFile(root, 'node_modules/ignored.js')).rejects.toThrow();
     await expect(readRepositoryFile(root, 'alias/ignored.js')).rejects.toThrow();
     await expect(readRepositoryFile(root, 'binary')).rejects.toThrow();
+    await expect(readRepositoryFile(root, '.env')).rejects.toThrow('Sensitive file');
+    await expect(readRepositoryFile(root, 'src/credentials.json')).rejects.toThrow('Sensitive file');
     await expect(scanRepository(path.join(base, 'missing'))).rejects.toThrow();
   });
 });

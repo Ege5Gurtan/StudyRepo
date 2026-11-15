@@ -3,3 +3,27 @@ dist/
 dist-electron/
 coverage/
 *.log
+
+# Local credentials and secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa
+id_dsa
+id_ed25519
+id_ecdsa
+.npmrc
+.pypirc
+.netrc
+.aws/
+.ssh/
+secrets/
+credentials/
+gitleaks-report.json

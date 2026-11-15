@@ -52,6 +52,20 @@ describe('AI tutor', () => {
     expect(options.headers).toEqual(expect.objectContaining({ Authorization: 'Bearer test-secret' }));
   });
 
+  it('redacts secrets in code and questions before sending an AI request', async () => {
+    const token = 'sk-proj-' + 'a'.repeat(35);
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ output: [{ content: [{ type: 'output_text', text: 'Done' }] }] })
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    await askTutor({ ...base, code: 'const apiKey = "' + token + '";',
+      question: 'Explain OPENAI_API_KEY=' + token }, 'test-key');
+    const [, options] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(String(options.body)).not.toContain(token);
+    expect(String(options.body)).toContain('[REDACTED');
+  });
+
   it('maps authentication failures to actionable errors', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 401 })));
     await expect(askTutor(base, 'invalid')).rejects.toThrow('key rejected');

@@ -96,8 +96,10 @@ describe('adaptive learning', () => {
       await mkdir(path.join(root, 'src'));
       await writeFile(path.join(root, 'src', 'game.js'), 'function getActive(items) {\n return items.filter(x => x.active);\n}');
       await writeFile(path.join(root, 'src', '.env'), 'OPENAI_API_KEY=SECRET');
+      const inlineToken = 'sk-proj-' + 'a'.repeat(35);
+      await writeFile(path.join(root, 'src', 'inline.js'), 'const token = "' + inlineToken + '";');
       const files = await retrieveLearningContext(root, 'game functions');
-      expect(files).toHaveLength(1);
+      expect(files).toHaveLength(2);
       expect(files[0].code).not.toContain('SECRET');
       vi.stubEnv('OPENAI_API_KEY', 'test-key');
       const fetchMock = vi.fn(async () => response(lesson));
@@ -111,6 +113,7 @@ describe('adaptive learning', () => {
       expect(body.store).toBe(false);
       expect(body.text.format.type).toBe('json_schema');
       expect(body.input).not.toContain('SECRET');
+      expect(body.input).not.toContain(inlineToken);
     } finally {
       await rm(root, { recursive: true, force: true });
     }

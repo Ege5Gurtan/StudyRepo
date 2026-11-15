@@ -174,3 +174,11 @@ The same Tutor instance remains mounted when switching between Practice, Explore
 ## Chat requests across conversations
 
 LLM requests belong to the repository conversation that submitted them, even while another conversation is selected. Switching A → B during **Thinking…** leaves A's request running; when it completes, the response and any generated challenge are saved to A's history, not B's. Returning to A shows the completed response. Per-conversation pending indicators prevent duplicate sends to the same conversation while permitting activity in another. Deleting a conversation before a response arrives discards its late response. Requests still depend on the running StudyRepo desktop process: exiting the app during a request does not provide background delivery.
+
+## Security and responsible AI use
+
+StudyRepo blocks common credential and private-key paths in its file explorer and AI source retrieval. It also redacts recognizable API tokens, credential assignments, bearer tokens, and private-key blocks **before** sending learning or tutor requests to OpenAI. This is heuristic defense in depth, **not** a guarantee that arbitrary secrets or proprietary code cannot be transmitted. Review your repository and selected code before enabling cloud AI, and do not open repositories containing confidential material unless you are authorized to share it with your AI provider.
+
+The OpenAI API key is read only from the Electron main-process environment; do not embed it in a source file or commit it. Local credential files are excluded by `.gitignore`, and a GitHub Actions security workflow checks Git history with Gitleaks and audits runtime dependencies with npm. You can run a local history scan with `gitleaks git --redact .` and a dependency audit with `npm audit --omit=dev --audit-level=high`.
+
+If a credential is found in a commit, **revoke or rotate it immediately**. Deleting the file in a new commit does not remove older Git objects; coordinate history cleanup with collaborators separately. Please report newly discovered exposures privately to the maintainers instead of posting credential values in public issues.
