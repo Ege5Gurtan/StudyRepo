@@ -62,9 +62,24 @@ describe('structured tutor actions', () => {
     const result = await askTutorWithActions({ ...base, question: 'Explain loops to me' });
     expect(result).toEqual({ type: 'message', text: 'A loop iterates.' });
     const body = JSON.parse(String((mock.mock.calls[0] as unknown as [string, RequestInit])[1].body)) as { tool_choice: string };
-    expect(body.tool_choice).toBe('auto');
+    expect(body.tool_choice).toBe('none');
   });
 
+  it('does not generate challenges for broad learning goals or multiple-choice requests', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'test-key');
+    const fetchMock = vi.fn(async () => ({
+      ok: true, json: async () => ({ output: [{ type: 'message', content: [{ type: 'output_text', text: 'Here is a C++ overview.' }] }] })
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    for (const question of ['Help me understand this repository and learn C++', 'Ask me a multiple choice question']) {
+      const result = await askTutorWithActions({ ...base, question });
+      expect(result).toEqual({ type: 'message', text: 'Here is a C++ overview.' });
+      const [, init] = fetchMock.mock.calls.at(-1)! as unknown as [string, RequestInit];
+      const sent = JSON.parse(String(init.body)) as { tool_choice: string; instructions: string };
+      expect(sent.tool_choice).toBe('none');
+      expect(sent.instructions).toContain('multiple-choice');
+    }
+  });
   it('does not allow structured actions outside Practice', async () => {
     await expect(askTutorWithActions({ ...base, context: 'Explorer' })).rejects.toThrow('Practice');
   });
