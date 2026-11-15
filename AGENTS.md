@@ -94,3 +94,18 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - `src/study/lesson-blocks.ts` parses bounded, strongly validated `studyrepo-quiz` and `studyrepo-diagram` fenced JSON. Invalid blocks fall back to Markdown; do not interpret generated JSX, HTML, SVG, CSS or scripts.
 - `src/components/TutorLessonContent.tsx` renders only predefined React quiz and generic node/edge diagram widgets and delegates ordinary Markdown to `RichTutorMessage` for sanitization and highlighting.
 - `electron/tutor.ts` shares structured teaching guidance with the action route. Keep model tools for actual coding challenges separate from ungraded quiz widgets. Preserve chat persistence and source-file links.
+
+## Tutor answer depth
+
+- Ordinary and tool-enabled Tutor answers share `TUTOR_TEACHING_GUIDANCE` and output limits from `electron/tutor.ts`.
+- History validation distinguishes brief user prompts from lengthy assistant lessons. Cap prior assistant context sent to the model, preserve bounded request validation, and continue redacting secrets.
+- Longer explanations consume more tokens; do not interpret response length as evidence of source coverage.
+
+### Additional visual lesson schemas
+
+`studyrepo-steps` contains a bounded array of titled steps and descriptions; `studyrepo-memory` contains bounded named values and explanatory notes. Render them with predefined React controls and reject excessive or malformed data. The AI should select based on learning concept, not repository identity. No model-authored markup or executable code.
+
+## AI Tutor reading layout
+
+- The expanded reading mode is App-level state passed into `TutorPanel`, not a distinct chat route or another Tutor instance. Existing pending requests, chat persistence and challenge links must keep working while toggling.
+- `src/style.css` expands the panel over the existing workspace, with an accessible return-to-code control. Never unmount Monaco or reset conversation history merely to change widths.

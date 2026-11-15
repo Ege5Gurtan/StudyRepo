@@ -101,7 +101,7 @@ async function structuredResponse(instructions: string, prompt: string, name: st
     const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST', headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || 'gpt-6-luna', store: false, max_output_tokens: 2400,
+        model: process.env.OPENAI_MODEL || 'gpt-6-luna', store: false, max_output_tokens: 3600,
         instructions, input: redactSecrets(prompt),
         text: { format: { type: 'json_schema', name, strict: true, schema: definition } }
       }), signal: controller.signal
@@ -141,7 +141,7 @@ export function parseLesson(value: unknown, files: ContextFile[], request: Learn
   const topics = (request.mode === 'next' || request.mode === 'similar' ? request.topics : v.topics) as LearningTopic[] | undefined;
   if (!Array.isArray(topics) || !topics.length || topics.length > 5 ||
       !topics.every(t => t && validText(t.id, 80) && validText(t.title, 120) && validText(t.objective, 500))) throw new Error('AI returned an invalid learning plan.');
-  if (!validText(v.introduction, 1400) || !validText(v.explanation, 4500)) throw new Error('AI returned an incomplete explanation.');
+  if (!validText(v.introduction, 1400) || !validText(v.explanation, 9000)) throw new Error('AI returned an incomplete explanation.');
   const ch = v.challenge as Partial<CodingChallenge> | undefined;
   if (!ch || !validText(ch.title, 160) || !validText(ch.description, 1800) || !validText(ch.language, 40) ||
       typeof ch.starterCode !== 'string' || ch.starterCode.length > 8000 || !Array.isArray(ch.criteria) ||
@@ -185,7 +185,7 @@ export async function generateLesson(value: unknown): Promise<LearningSession> {
     'Then create ONE small, standalone coding challenge adapted from the actual repository code, suited to the student level. ' +
     'Never copy secrets, never request edits to original files, do not claim compilation or execution. ' +
     'References must point only to source files and line ranges explicitly supplied in the input. ' +
-    'Keep explanation focused, accessible and question-friendly; use short code examples sparingly.',
+    'Teach as a clear, progressive programming lesson: brief intuition, verified source example, relevant syntax, and a worked example when useful. Use readable Markdown headings, code fences and concrete examples. Keep source-grounded explanations focused and avoid inventing repository behavior.',
     prompt, 'studyrepo_lesson', schema);
   return parseLesson(data, files, request);
 }

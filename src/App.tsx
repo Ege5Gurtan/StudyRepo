@@ -45,6 +45,7 @@ export default function App() {
   const [error, setError] = useState('');
   const [theme, setTheme] = useState<'dark' | 'light'>(() => localStorage.getItem('theme') === 'light' ? 'light' : 'dark');
   const [tutorVisible, setTutorVisible] = useState(true);
+  const [tutorExpanded, setTutorExpanded] = useState(false);
   const [focusChatChallengeId, setFocusChatChallengeId] = useState<string | null>(null);
   const [conversationStore, setConversationStore] = useState<ConversationStore>(emptyConversations);
   const activeConversation = conversationStore.conversations.find(item => item.id === conversationStore.activeId);
@@ -357,7 +358,7 @@ export default function App() {
       <div className="recent">{repositories.length ? repositories.map(repo => <div className={`recent-item ${scan?.repository.path === repo.path ? 'selected-repo' : ''}`} key={repo.path}><button title={repo.path} className="recent-open" onClick={() => { void loadRepository(repo); }}>{repo.name}</button><button className="recent-remove" aria-label={`Remove ${repo.name} from StudyRepo`} title="Remove from StudyRepo (files stay on disk)" onClick={() => { void removeImportedRepository(repo); }}>×</button></div>) : <p>No repositories yet</p>}</div>
       <div className="sidebar-footer">Local-first · Private by design</div>
     </aside>
-    <main>
+    <main className={tutorExpanded && tutorVisible && scan && (page === 'Practice' || page === 'Explorer') ? 'tutor-reading-mode' : undefined}>
       <header><div><span className="muted">WORKSPACE</span><span className="header-separator">/</span>{scan?.repository.name ?? 'No repository'}</div><div className="header-actions"><span className="header-page">{page}</span><button type="button" className="panel-toggle" aria-label={tutorVisible ? 'Hide AI Tutor' : 'Show AI Tutor'} aria-pressed={tutorVisible} onClick={() => setTutorVisible(value => !value)}>{tutorVisible ? '◧ Hide Tutor' : '◨ Show Tutor'}</button></div></header>
       {error && <div className="error" role="alert">{error}<button onClick={() => setError('')}>×</button></div>}
       {!scan && page !== 'Settings' ? <div className="empty"><div className="empty-icon">⌘</div><h1>Learn the code you build.</h1><p>Import a local repository to explore its structure and start studying.</p><button className="primary" onClick={importRepository}>Import a repository</button></div> :
@@ -373,6 +374,8 @@ export default function App() {
       {scan && <TutorPanel
         key={scan.repository.path + ':tutor:' + (conversationStore.activeId ?? 'none')}
         hidden={!tutorVisible || (page !== 'Practice' && page !== 'Explorer')}
+        expanded={tutorExpanded}
+        onToggleExpanded={() => setTutorExpanded(value => !value)}
         repository={scan.repository.path}
         context={page === 'Explorer' ? 'Explorer' : 'Practice'}
         sourceFile={page === 'Explorer' ? current?.path : undefined}
