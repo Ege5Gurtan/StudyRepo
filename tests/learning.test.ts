@@ -43,7 +43,7 @@ describe('adaptive learning', () => {
       await writeFile(path.join(root, 'Source', 'Semicon', 'TerrainObjectGenerator.cpp'), 'int32 FloorDivCells(int32 x) { return x; }');
       await writeFile(path.join(root, 'Intermediate', 'Build', 'TerrainObjectGenerator.gen.cpp'), 'GENERATED_BODY');
       const files = await retrieveLearningContext(root, 'help me learn C++ in this repository');
-      expect(files[0].file).toMatch(/TerrainObjectGenerator\\.cpp$/);
+      expect(files[0].file.endsWith('TerrainObjectGenerator.cpp')).toBe(true);
       expect(files.every(f => !f.file.includes('Intermediate'))).toBe(true);
     } finally {
       await rm(root, { recursive: true, force: true });
