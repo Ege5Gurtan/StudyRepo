@@ -76,9 +76,9 @@ describe('challenge history state', () => {
 
   it('stores multiple-choice checks without creating coding challenges and persists selected answers', () => {
     const fence = String.fromCharCode(96).repeat(3);
-    const content = 'What is a reference?\\n\\n' + fence + 'studyrepo-quiz\\n' +
+    const content = 'What is a reference?\n\n' + fence + 'studyrepo-quiz\n' +
       JSON.stringify({question:'What does & do in a parameter?',options:['Copy','Reference'],answer:1,explanation:'It passes a reference.'}) +
-      '\\n' + fence;
+      '\n' + fence;
     const archive = appendTutorReplyWithActivities(emptyArchive(), content);
     expect(archive.entries).toHaveLength(0);
     expect(archive.activities).toHaveLength(1);
