@@ -212,3 +212,7 @@ Code snippets now show a single language/Copy toolbar even after repeated render
 ### Read-only repository investigation
 
 The Practice and Explorer AI tutors can now request additional verified source context with bounded `search_code`, `find_symbol`, and `read_source` tools. Tools only search allowlisted local source files, use safe read-only file access, and return relevant source excerpts with paths and line numbers. Search is heuristic and capped per answer (four retrieval rounds, eight source tool calls); it is not a complete compiler call graph or a guarantee of full repository coverage. Code excerpts are sent to the model when requested and must be treated as potentially sensitive.
+
+### Tutor code readability and verified source reads
+
+Fenced source code in AI responses now uses accessible Tutor-controlled syntax colors rather than inline Monaco theme colors. For codebase exploration questions, the assistant can be required to call a read-only source-discovery tool before answering. It can list source paths, search code, and read bounded line ranges. When the assistant actually reads source ranges, a **Files inspected** expander appears below its reply with clickable file/line references. If no source was read, no such list is shown; generated explanations remain subject to model limitations.

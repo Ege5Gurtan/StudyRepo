@@ -1,7 +1,7 @@
 import { buildTutorInput, validateTutorRequest, TUTOR_TEACHING_GUIDANCE, TUTOR_OUTPUT_TOKENS, TUTOR_OUTPUT_CHARS } from './tutor';
 import { retrieveNamedFileContext } from './tutor-source';
 import { retrieveLearningContext } from './learning';
-import { runRepositoryTutor } from './tutor-retrieval';
+import { appendSourceTrace, runRepositoryTutor } from './tutor-retrieval';
 import type { TutorAction } from '../src/shared/types';
 
 // Model tool calls describe intent; only the validated app IPC handler is allowed
@@ -89,8 +89,10 @@ export async function askTutorWithActions(requestValue: unknown): Promise<TutorA
     instructions, input, maxOutputTokens: TUTOR_OUTPUT_TOKENS,
     additionalTools: explicitlyRequestsChallenge(request.question) ? challengeTools : [],
     // Explicit coding requests retain the original strict challenge action path.
-    toolChoice: explicitlyRequestsChallenge(request.question) ? 'required' : 'auto'
+    toolChoice: explicitlyRequestsChallenge(request.question) ? 'required' : 'auto',
+    requireSourceLookup: !explicitlyRequestsChallenge(request.question) && /\b(?:game rules|codebase|source files|project architecture|trace the|where is|where are|actual behavior)\b/i.test(request.question)
   });
-  return parseTutorAction(result);
+  const action = parseTutorAction(result);
+  return action.type === 'message' ? { ...action, text: appendSourceTrace(action.text, result.inspected) } : action;
 
 }

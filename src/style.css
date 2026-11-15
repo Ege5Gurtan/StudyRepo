@@ -515,3 +515,17 @@ input { accent-color: #8270e4; }
 /* Keep code readable even if syntax tokenization is unavailable. */
 .tutor-rich-text pre code { min-height: 1.4em; color: #e2e8f0; }
 .tutor-rich-text pre code span { background: transparent; }
+
+/* Token colors are owned by the Tutor surface, never Monaco's global editor theme. */
+.tutor-rich-text pre code, .tutor-rich-text pre code span { color: #e2e8f0; }
+.tutor-rich-text pre code .tutor-token-keyword { color: #c4a7ff; }
+.tutor-rich-text pre code .tutor-token-type { color: #80d6f4; }
+.tutor-rich-text pre code .tutor-token-string { color: #a5e2a0; }
+.tutor-rich-text pre code .tutor-token-number { color: #ffca89; }
+.tutor-rich-text pre code .tutor-token-comment { color: #a1abbc; }
+.tutor-rich-text pre code .tutor-token-directive { color: #f3a9d8; }
+.tutor-source-trace { margin-top: 12px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; }
+.tutor-source-trace summary { cursor: pointer; color: var(--accent); }
+.tutor-source-trace ul { margin: 8px 0 0; padding-left: 17px; }
+.tutor-source-trace button { border: 0; padding: 3px 0; background: none; color: var(--text); text-align: left; overflow-wrap: anywhere; }
+.tutor-source-trace button:hover { color: var(--accent); text-decoration: underline; }
