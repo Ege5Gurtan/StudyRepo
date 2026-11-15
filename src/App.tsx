@@ -315,8 +315,9 @@ export default function App() {
     setLearningError('');
   }
   function showChallengeInTutor() {
-    if (!activeEntry) return;
     setTutorVisible(true);
+    if (selectedQuizId) { setTutorExpanded(true); return; }
+    if (!activeEntry) { setTutorExpanded(true); return; }
     setFocusChatChallengeId(activeEntry.id);
   }
   function showChallengeFromTutor(index: number) {
