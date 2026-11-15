@@ -73,6 +73,44 @@ describe('read-only AI source retrieval', () => {
     } finally { await rm(root, { recursive: true, force: true }); }
   });
 
+  it('discovers source paths even when a broad question does not name a file', async () => {
+    const root = await fixture();
+    try {
+      const reader = new SourceReader(root);
+      const listed = await reader.execute('list_source_files', '{"query":"WorldManager"}');
+      expect(listed).toContain('WorldManager.cpp');
+      expect(listed).toContain('WorldManager.h');
+      expect(await reader.execute('list_source_files', '{"query":""}')).not.toContain('.env');
+      expect((await reader.execute('read_source', '{"file":"Source/WorldManager.cpp","start_line":2,"end_line":3}'))).toContain('SpawnChunks');
+      expect(reader.inspected).toEqual([{ file: path.join('Source', 'WorldManager.cpp'), startLine: 2, endLine: 3 }]);
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+
+  it('requires a repository source tool on the first pass for codebase questions', async () => {
+    const root = await fixture();
+    try {
+      let count = 0;
+      vi.stubGlobal('fetch', vi.fn(async (_url: string, init: RequestInit) => {
+        count++;
+        const body = JSON.parse(String(init.body)) as { tool_choice: string; input: unknown[] };
+        if (count === 1) {
+          expect(body.tool_choice).toBe('required');
+          return { ok: true, json: async () => ({ output: [{
+            type: 'function_call', call_id: 'source-1', name: 'read_source',
+            arguments: '{"file":"Source/WorldManager.cpp","start_line":1,"end_line":4}'
+          }] }) };
+        }
+        expect(body.tool_choice).toBe('auto');
+        expect(JSON.stringify(body.input)).toContain('SpawnChunks');
+        return { ok: true, json: async () => ({ output: [{ type: 'message', content: [{ type: 'output_text', text: 'Verified gameplay code.' }] }] }) };
+      }));
+      const result = await runRepositoryTutor({ repository: root, apiKey: 'test', model: 'test',
+        input: [{ role: 'user', content: 'Explain game rules' }], instructions: 'Tutor', requireSourceLookup: true });
+      expect(result.inspected).toEqual([{ file: path.join('Source', 'WorldManager.cpp'), startLine: 1, endLine: 4 }]);
+      expect(count).toBe(2);
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+
   it('keeps mandatory challenge actions separate from source tools', async () => {
     const fetchMock = vi.fn(async (_url: string, init: RequestInit) => {
       const body = JSON.parse(String(init.body)) as { tools: { name: string }[]; tool_choice: string };
