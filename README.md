@@ -204,3 +204,7 @@ Use **Expand** in the AI Tutor header to switch from the compact code-side panel
 StudyRepo no longer creates a coding challenge automatically when someone starts a conversation with a general learning goal. The Tutor first answers using a bounded selection of safe source excerpts, with optional knowledge-check questions. Users can explicitly ask for a coding challenge, choose the **Coding challenge** quick action, or request **Multiple choice** instead.
 
 Comprehension quizzes are stored separately from coding challenges in the same local conversation archive. **Activities** history distinguishes `Challenge` and `MultipleChoice`, shows answer status, and supports revisiting a saved quiz. Existing challenge records and code drafts remain compatible. This first version records quiz selections; it does not grade coding ability, award points, or execute repository code.
+
+### Source readability fixes
+
+Code snippets now show a single language/Copy toolbar even after repeated rendering. Initial C++ teaching searches prefer handwritten C++ sources over C# build configuration and ignore generated Unreal build outputs; this does not change repository files or how explicit named-file requests work.
