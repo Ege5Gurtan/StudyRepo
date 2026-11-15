@@ -112,7 +112,7 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 
 ## Explanation-first tutoring and mixed activities
 
-- A first general learning prompt goes through the normal Tutor action route with bounded, allowlisted source samples, not automatic `generateLesson`. Only explicit coding-challenge requests can call the challenge tool; multiple-choice requests must remain conversational.
+- A first general learning prompt goes through the normal Tutor action route and uses bounded read-only source tools to investigate actual repository code, not automatic `generateLesson` or an arbitrary opening-file sample. Only explicit coding-challenge requests can call the challenge tool; multiple-choice requests must remain conversational.
 - `LearningArchive.entries` stays the legacy coding-challenge store; `LearningArchive.activities` is an optional typed array of persisted `MultipleChoice` activities. Never break legacy archives or silently generate coding challenges for each prompt.
 - `appendTutorReplyWithActivities` parses validated quiz blocks, attaches stable quiz IDs to the assistant message and records them atomically. `setQuizAnswer` persists choices independently of coding challenge evaluations.
 - `LearningActivityHistory` combines both kinds chronologically and provides navigation. Keep chat links and in-flight conversation isolation intact; do not treat model-authored code or source as executable instructions.
@@ -142,5 +142,5 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 ## Learner-friendly repository tutorials
 
 - Broad repository tutorial prompts in Practice and Explorer must use the existing bounded read-only source tool flow, not preloaded opening-file samples. Keep mandatory coding-challenge actions separate.
-- Centralize tutorial detection and teaching guidance in `electron/tutor.ts` and share them with `electron/tutor-actions.ts`. Teach one fully grounded first lesson plus a short roadmap, with explicit beginner prerequisites, tiny verified excerpts, worked examples and an optional check.
+- Centralize tutorial detection and teaching guidance in `electron/tutor.ts` and share them with `electron/tutor-actions.ts`. Teach one fully grounded first lesson plus a short roadmap, with explicit beginner prerequisites, tiny verified excerpts, worked examples and an optional check. Detect tutorial intent independently of specific programming-language names; infer relevant languages and frameworks from inspected source, including mixed-language projects.
 - Keep implementation/header/caller statements tied to actually inspected source; never imply complete repository coverage. Preserve source traces, safety limits, chat isolation and existing interactive quiz blocks.
