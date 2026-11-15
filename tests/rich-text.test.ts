@@ -25,6 +25,15 @@ describe('rich AI Tutor formatting', () => {
     expect(markdownToHtml('Formula: $E=mc^2$')).toContain('<math');
     expect(latexToMathML('<script>')).not.toContain('<script>');
   });
+  it('keeps fenced C++ source readable in generated HTML', () => {
+    const fence = String.fromCharCode(96).repeat(3);
+    const source = 'int32 CountFromDensity(float Density) {\\n  return FMath::FloorToInt32(Density);\\n}';
+    const html = markdownToHtml(fence + 'cpp\\n' + source + '\\n' + fence);
+    expect(html).toContain('language-cpp');
+    expect(html).toContain('CountFromDensity');
+    expect(html).toContain('FloorToInt32');
+    expect(html).not.toContain('cppCopy');
+  });
   it('does not replace math-like text inside code fences', () => {
     const fence = String.fromCharCode(96).repeat(3);
     const html = markdownToHtml(fence + 'js\nconst price = "$5";\n' + fence);
