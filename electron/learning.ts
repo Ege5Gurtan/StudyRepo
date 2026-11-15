@@ -4,7 +4,6 @@ import { scanRepository, readRepositoryFile } from './repository';
 import type { CodingChallenge, LearningEvaluateRequest, LearningEvaluation, LearningGenerateRequest, LearningLesson, LearningReference, LearningSession, LearningTopic, TreeNode } from '../src/shared/types';
 
 const allowedExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.cpp', '.cc', '.cxx', '.h', '.hpp', '.py', '.go', '.rs', '.java', '.cs']);
-const sensitive = /(?:^|[\/\\])(?:\.env(?:\..*)?|\.git|secrets?|credentials?|private|keys?|certs?|node_modules)(?:[\/\\]|$)|(?:\.pem|\.key|\.p12|\.pfx)$/i;
 const MAX_CODE = 8000;
 const MAX_GOAL = 1500;
 
