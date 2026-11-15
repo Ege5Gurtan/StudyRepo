@@ -49,23 +49,40 @@ export function RichTutorMessage({ content }: Props) {
       cleanups.push(() => { copy.removeEventListener('click', onCopy); bar.remove(); });
       bar.append(label, copy);
       pre.prepend(bar);
-      // Monaco colorization uses the already-bundled editor grammar and does
-      // not execute code. Sanitize the resulting markup before insertion.
-      void monaco.editor.colorize(raw, language, { tabSize: 2 }).then(highlighted => {
-        if (disposed || !code.isConnected) return;
-        const sanitized = DOMPurify.sanitize(highlighted, {
-          ALLOWED_TAGS: ['span', 'br'],
-          ALLOWED_ATTR: ['class', 'style']
+      // Monaco's colorize() emits inline colors from the editor theme. Those
+      // can be nearly black in the dark Tutor panel. Use tokenizer scopes with
+      // our own accessible palette instead; never insert model-authored markup.
+      try {
+        const lines = raw.split('\n');
+        const tokens = monaco.editor.tokenize(raw, language);
+        const fragment = document.createDocumentFragment();
+        lines.forEach((line, index) => {
+          const row = tokens[index] ?? [];
+          if (!row.length) {
+            fragment.appendChild(document.createTextNode(line));
+          } else {
+            row.forEach((token, tokenIndex) => {
+              const end = row[tokenIndex + 1]?.offset ?? line.length;
+              const chunk = line.slice(token.offset, end);
+              if (!chunk) return;
+              const part = document.createElement('span');
+              const scope = token.type.toLowerCase();
+              if (/comment/.test(scope)) part.className = 'tutor-token-comment';
+              else if (/string|regexp/.test(scope)) part.className = 'tutor-token-string';
+              else if (/keyword|control|storage/.test(scope)) part.className = 'tutor-token-keyword';
+              else if (/number|numeric/.test(scope)) part.className = 'tutor-token-number';
+              else if (/type|class|struct/.test(scope)) part.className = 'tutor-token-type';
+              else if (/preprocessor|directive|meta/.test(scope)) part.className = 'tutor-token-directive';
+              part.textContent = chunk;
+              fragment.appendChild(part);
+            });
+          }
+          if (index < lines.length - 1) fragment.appendChild(document.createTextNode('\n'));
         });
-        // The renderer must never replace readable source text with empty or
-        // incomplete highlighted HTML (a frequent failure with unsupported grammars).
-        const candidate = document.createElement('span');
-        candidate.innerHTML = sanitized;
-        const normalized = (value: string) => value.replace(/\s+/g, '');
-        if (normalized(candidate.textContent ?? '') === normalized(raw) && raw.trim()) {
-          code.innerHTML = sanitized;
-        } // Otherwise keep the original, readable fenced code.
-      }).catch(() => { /* plain code remains readable */ });
+        if (!disposed && code.isConnected && fragment.textContent === raw) code.replaceChildren(fragment);
+      } catch {
+        // Unsupported grammars retain the original readable, unstyled source.
+      }
     });
 
     // Do not allow untrusted model-generated links to navigate the Electron
