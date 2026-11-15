@@ -59,7 +59,13 @@ export interface MultipleChoiceActivity {
   checked?: boolean;
   createdAt: string;
 }
+export interface GuidedLessonFocus {
+  title: string;
+  objective: string;
+  references: LearningReference[];
+}
 export interface TutorRequest {
+  guidedLesson?: GuidedLessonFocus;
   repository: string;
   context: 'Practice' | 'Explorer';
   sourceFile?: string;
@@ -107,6 +113,7 @@ export interface LearningEvaluation {
   criteria: { criterion: string; met: boolean; explanation: string }[];
 }
 export interface LearningGenerateRequest {
+  guidedLesson?: GuidedLessonFocus;
   repository: string;
   goal: string;
   mode: 'start' | 'next' | 'similar' | 'extend' | 'focused';
