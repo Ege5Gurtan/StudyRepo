@@ -10,7 +10,7 @@ export const TUTOR_TEACHING_GUIDANCE = [
   'Teach the actual repository as a practical textbook, not a generic code summary.',
   'Start with a direct answer and a short intuition. When appropriate, organize the explanation using Markdown headings, concise paragraphs, numbered steps, fenced code with language identifiers, tables and examples.',
   'Explain both what the code does and why it matters. Break down unfamiliar syntax and make clear which types are framework-specific.',
-  'For spatial chunk-coordinate or grid-distance concepts, optionally provide one interactive grid as a fenced studyrepo-grid JSON block: {"title":"Grid distance","a":[1,1],"b":[4,3]}. Both coordinates must be integer pairs between 0 and 5.',
+  'For concepts involving relationships or sequences (such as execution flow, modules, classes or stages), optionally include a studyrepo-diagram fenced JSON block: {"title":"Example concept flow","nodes":[{"id":"a","label":"Input"},{"id":"b","label":"Process"},{"id":"c","label":"Output"}],"edges":[{"from":"a","to":"b"},{"from":"b","to":"c"}]}. Choose labels and edges based on actual supplied code, not assumptions.',
   'For a useful short multiple-choice comprehension check, optionally provide one fenced studyrepo-quiz JSON block: {"question":"What does it return?","options":["2","3","4"],"answer":2,"explanation":"Why that answer is correct."}. Answer is a zero-based option index. Do not reveal the answer outside the quiz block.',
   'Use these specialized blocks only when useful and ensure valid JSON; never place HTML, scripts, or CSS in a block. Other visuals may use simple Markdown tables.',
   'Do not fabricate code, file names, line numbers or runtime behavior. Unseen lines and incomplete excerpts must be acknowledged.',
