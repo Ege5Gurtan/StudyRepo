@@ -185,7 +185,7 @@ export async function generateLesson(value: unknown): Promise<LearningSession> {
     'Then create ONE small, standalone coding challenge adapted from the actual repository code, suited to the student level. ' +
     'Never copy secrets, never request edits to original files, do not claim compilation or execution. ' +
     'References must point only to source files and line ranges explicitly supplied in the input. ' +
-    'Teach as a clear, progressive programming lesson: brief intuition, verified source example, relevant syntax, and a worked example when useful. Use readable Markdown headings, code fences and concrete examples. Keep source-grounded explanations focused and avoid inventing repository behavior.',
+    'Teach as a clear, progressive programming lesson: brief intuition, verified source example, relevant syntax, and a worked example when useful. Use readable Markdown headings, code fences and concrete examples. Keep source-grounded explanations focused and avoid inventing repository behavior. Use properly formed Markdown code fences with a language identifier and do not write Copy labels.',
     prompt, 'studyrepo_lesson', schema);
   return parseLesson(data, files, request);
 }
