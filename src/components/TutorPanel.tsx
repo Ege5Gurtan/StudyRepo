@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ChallengeHistoryEntry, MultipleChoiceActivity, TutorMessage } from '../shared/types';
 import { withStudentMessage, withTutorReply } from '../study/chat-messages';
 import { TutorLessonContent } from './TutorLessonContent';
+import { parseTutorSourceTrace } from '../study/source-trace';
 
 interface Props {
   repository: string;
@@ -100,7 +101,17 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
         {activeChallenge.session.lesson.references.length > 0 && <div className="tutor-challenge-sources">{activeChallenge.session.lesson.references.map((ref, index) => <button key={index} onClick={() => onOpenSource?.(ref.file, ref.startLine)}>{ref.file}:{ref.startLine}–{ref.endLine} ↗</button>)}</div>}
       </div>}
       {messages.length === 0 && <p className="muted">Ask about this repository, a programming concept, or a source file. We'll start by exploring the code; exercises are optional.</p>}
-      {messages.map((message, index) => <div id={'tutor-message-' + index} className={`tutor-message ${message.role === 'user' ? 'student' : 'tutor'}`} key={index}>{message.role === 'assistant' ? <TutorLessonContent content={message.content} quizActivities={(message.activityIds ?? []).map(id => quizActivities.find(a => a.id === id)).filter((a): a is MultipleChoiceActivity => !!a)} onQuizChange={onQuizChange}/> : message.content}{message.challengeId && challengeEntries.some(entry => entry.id === message.challengeId) && <button type="button" className="tutor-message-challenge-link" onClick={() => onOpenChallenge?.(challengeEntries.findIndex(entry => entry.id === message.challengeId))}>Open linked challenge ↗</button>}</div>)}
+      {messages.map((message, index) => {
+        const { body, sources } = message.role === 'assistant' ? parseTutorSourceTrace(message.content) : { body: message.content, sources: [] };
+        return <div id={'tutor-message-' + index} className={`tutor-message ${message.role === 'user' ? 'student' : 'tutor'}`} key={index}>
+          {message.role === 'assistant' ? <TutorLessonContent content={body} quizActivities={(message.activityIds ?? []).map(id => quizActivities.find(a => a.id === id)).filter((a): a is MultipleChoiceActivity => !!a)} onQuizChange={onQuizChange}/> : body}
+          {sources.length > 0 && <details className="tutor-source-trace"><summary>Files inspected ({sources.length})</summary><ul>
+            {sources.map((source, sourceIndex) => <li key={sourceIndex}><button type="button" onClick={() => onOpenSource?.(source.file, source.startLine)}
+              title="Open verified source in Explorer">{source.file}:{source.startLine}–{source.endLine} ↗</button></li>)}
+          </ul></details>}
+          {message.challengeId && challengeEntries.some(entry => entry.id === message.challengeId) && <button type="button" className="tutor-message-challenge-link" onClick={() => onOpenChallenge?.(challengeEntries.findIndex(entry => entry.id === message.challengeId))}>Open linked challenge ↗</button>}
+        </div>;
+      })}
       {(busy || pending) && <p role="status" className="muted">Thinking…</p>}
     </div>
     {error && <p className="tutor-error" role="alert">{error} <button onClick={() => { void send(messages.at(-1)?.role === 'user' ? messages.at(-1)?.content ?? '' : '', true); }}>Retry</button></p>}
