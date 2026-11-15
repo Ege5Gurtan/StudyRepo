@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { parseLessonBlocks, type LessonBlock } from '../study/lesson-blocks';
 import { RichTutorMessage } from './RichTutorMessage';
 
 function Quiz({ block }: { block: Extract<LessonBlock, { type: 'quiz' }> }) {
+  const radioName = useId();
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
   return <section className="tutor-learning-widget" aria-label="Knowledge check">
@@ -10,7 +11,7 @@ function Quiz({ block }: { block: Extract<LessonBlock, { type: 'quiz' }> }) {
     <h4>{block.question}</h4>
     <div className="tutor-quiz-options">
       {block.options.map((option, index) => <label key={index} className={selected === index ? 'selected' : ''}>
-        <input type="radio" name="tutor-answer" checked={selected === index} onChange={() => { setSelected(index); setChecked(false); }} />
+        <input type="radio" name={radioName} checked={selected === index} onChange={() => { setSelected(index); setChecked(false); }} />
         <span>{option}</span>
       </label>)}
     </div>
