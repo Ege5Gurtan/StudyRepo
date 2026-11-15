@@ -87,7 +87,7 @@ export async function askTutorWithActions(requestValue: unknown): Promise<TutorA
   const result = await runRepositoryTutor({
     repository: request.repository, apiKey, model: process.env.OPENAI_MODEL || 'gpt-6-luna',
     instructions, input, maxOutputTokens: TUTOR_OUTPUT_TOKENS,
-    additionalTools: challengeTools,
+    additionalTools: explicitlyRequestsChallenge(request.question) ? challengeTools : [],
     // Explicit coding requests retain the original strict challenge action path.
     toolChoice: explicitlyRequestsChallenge(request.question) ? 'required' : 'auto'
   });
