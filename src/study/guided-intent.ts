@@ -14,7 +14,7 @@ export function guidedLearningIntent(question: string, active?: GuidedLearningPa
 // Use the active lesson for generic one-off practice requests. A requested
 // different topic or new set must keep the existing challenge workflow.
 export function requestsCurrentLessonChallenge(question: string): boolean {
-  return /^(?:(?:create|generate|make|give me)\s+(?:a|an|one)\s+(?:coding\s+)?(?:challenge|exercise)(?:\s+(?:using|from|based on)\s+(?:(?:this|the|my)\s+)?(?:repo(?:sitory)?|codebase|project))?|challenge\s+me\s+on\s+(?:this|the|current)\s+lesson|practice\s+(?:this|the|current)\s+lesson)[.!?\s]*$/i.test(question.trim());
+  return /^(?:(?:create|generate|make|give me)\s+(?:a|an|one)\s+(?:coding\s+)?(?:challenge|exercise)(?:\s+(?:using|from|based on)\s+(?:(?:this|the|my)\s+)?(?:repo(?:sitory)?|codebase|project))?|challenge\s+me\s+on\s+(?:this|the(?:\s+current)?|current)\s+lesson|practice\s+(?:this|the|current)\s+lesson)[.!?\s]*$/i.test(question.trim());
 }
 
 export function formatGuidedLesson(path: GuidedLearningPath, showRoadmap: boolean): string {
