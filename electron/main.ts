@@ -6,6 +6,7 @@ import { buildRepositoryIndex } from './intelligence';
 import { askTutor } from './tutor';
 import { askTutorWithActions } from './tutor-actions';
 import { generateLesson, evaluateSolution } from './learning';
+import { generateGuidedLesson } from './learning-path';
 import { sampleQuiz, scoreQuiz } from '../src/study/quiz';
 
 let db: Database;
@@ -52,6 +53,11 @@ function registerHandlers() {
   ipcMain.handle('learning:history:save', (_event, root: unknown, archive: unknown) => {
     requireRepository(root);
     db.saveLearningArchive(root, archive);
+  });
+  ipcMain.handle('learning:guided', async (_event, request: unknown) => {
+    if (!request || typeof request !== 'object') throw new Error('Invalid guided lesson request.');
+    requireRepository((request as { repository?: unknown }).repository);
+    return generateGuidedLesson(request);
   });
   ipcMain.handle('learning:generate', async (_event, request: unknown) => {
     if (!request || typeof request !== 'object') throw new Error('Invalid learning request.');
