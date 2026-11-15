@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChallengeHistoryEntry, TutorMessage } from '../shared/types';
 import { withStudentMessage, withTutorReply } from '../study/chat-messages';
-import { RichTutorMessage } from './RichTutorMessage';
+import { TutorLessonContent } from './TutorLessonContent';
 
 interface Props {
   repository: string;
@@ -90,13 +90,13 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
           <p><strong>{activeChallenge.session.topics[activeChallenge.session.topicIndex]?.title}</strong></p>
           <p>{activeChallenge.session.topics[activeChallenge.session.topicIndex]?.objective}</p>
           <p>{activeChallenge.session.lesson.introduction}</p>
-          <RichTutorMessage content={activeChallenge.session.lesson.explanation}/>
+          <TutorLessonContent content={activeChallenge.session.lesson.explanation}/>
           <ul>{activeChallenge.session.lesson.challenge.criteria.map((criterion, index) => <li key={index}>{criterion}</li>)}</ul>
         </details>
         {activeChallenge.session.lesson.references.length > 0 && <div className="tutor-challenge-sources">{activeChallenge.session.lesson.references.map((ref, index) => <button key={index} onClick={() => onOpenSource?.(ref.file, ref.startLine)}>{ref.file}:{ref.startLine}–{ref.endLine} ↗</button>)}</div>}
       </div>}
       {messages.length === 0 && <p className="muted">Tell me what you'd like to study, or ask about your current challenge. I'll guide you through the reasoning.</p>}
-      {messages.map((message, index) => <div className={`tutor-message ${message.role === 'user' ? 'student' : 'tutor'}`} key={index}>{message.role === 'assistant' ? <RichTutorMessage content={message.content}/> : message.content}{message.challengeId && challengeEntries.some(entry => entry.id === message.challengeId) && <button type="button" className="tutor-message-challenge-link" onClick={() => onOpenChallenge?.(challengeEntries.findIndex(entry => entry.id === message.challengeId))}>Open linked challenge ↗</button>}</div>)}
+      {messages.map((message, index) => <div className={`tutor-message ${message.role === 'user' ? 'student' : 'tutor'}`} key={index}>{message.role === 'assistant' ? <TutorLessonContent content={message.content}/> : message.content}{message.challengeId && challengeEntries.some(entry => entry.id === message.challengeId) && <button type="button" className="tutor-message-challenge-link" onClick={() => onOpenChallenge?.(challengeEntries.findIndex(entry => entry.id === message.challengeId))}>Open linked challenge ↗</button>}</div>)}
       {(busy || pending) && <p role="status" className="muted">Thinking…</p>}
     </div>
     {error && <p className="tutor-error" role="alert">{error} <button onClick={() => { void send(messages.at(-1)?.role === 'user' ? messages.at(-1)?.content ?? '' : '', true); }}>Retry</button></p>}
