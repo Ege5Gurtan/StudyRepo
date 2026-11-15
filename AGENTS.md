@@ -117,6 +117,11 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - `appendTutorReplyWithActivities` parses validated quiz blocks, attaches stable quiz IDs to the assistant message and records them atomically. `setQuizAnswer` persists choices independently of coding challenge evaluations.
 - `LearningActivityHistory` combines both kinds chronologically and provides navigation. Keep chat links and in-flight conversation isolation intact; do not treat model-authored code or source as executable instructions.
 
+## Tutor rendering and source quality
+
+- `RichTutorMessage` inserts code toolbars inside React effects; remove existing toolbars and detach new toolbars in the effect cleanup. React StrictMode repeats effects, so rendering must not accumulate duplicate `cpp`/Copy rows.
+- `sourceCandidates` excludes generated Unreal artifacts and build-output directories; C++ learning queries should prioritize `.cpp` and headers over Unreal `.Target.cs` / `.Build.cs` rules. Explicit named-file retrieval remains separately bounded and protected.
+
 ## Read-only agentic source retrieval
 
 - `electron/tutor-retrieval.ts` exposes bounded search_code, find_symbol, and read_source model tools to Practice and Explorer. Tools use the scanner allowlist, `readRepositoryFile` security checks, secret redaction, a per-answer call/context budget, and source line references.
