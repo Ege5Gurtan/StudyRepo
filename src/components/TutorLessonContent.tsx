@@ -1,23 +1,39 @@
 import { useId, useMemo, useState } from 'react';
 import { parseLessonBlocks, type LessonBlock } from '../study/lesson-blocks';
+import type { MultipleChoiceActivity } from '../shared/types';
 import { RichTutorMessage } from './RichTutorMessage';
 
-function Quiz({ block }: { block: Extract<LessonBlock, { type: 'quiz' }> }) {
+export function Quiz({ block, activity, onChange }: {
+  block: Extract<LessonBlock, { type: 'quiz' }>;
+  activity?: MultipleChoiceActivity;
+  onChange?: (id: string, selected: number, checked: boolean) => void;
+}) {
   const radioName = useId();
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
+  const currentSelection = activity ? activity.selected ?? null : selected;
+  const currentChecked = activity ? activity.checked ?? false : checked;
+  const choose = (index: number) => {
+    if (activity && onChange) onChange(activity.id, index, false);
+    else { setSelected(index); setChecked(false); }
+  };
+  const check = () => {
+    if (currentSelection === null) return;
+    if (activity && onChange) onChange(activity.id, currentSelection, true);
+    else setChecked(true);
+  };
   return <section className="tutor-learning-widget" aria-label="Knowledge check">
     <span className="tutor-widget-eyebrow">CHECK YOUR UNDERSTANDING</span>
     <h4>{block.question}</h4>
     <div className="tutor-quiz-options">
-      {block.options.map((option, index) => <label key={index} className={selected === index ? 'selected' : ''}>
-        <input type="radio" name={radioName} checked={selected === index} onChange={() => { setSelected(index); setChecked(false); }} />
+      {block.options.map((option, index) => <label key={index} className={currentSelection === index ? 'selected' : ''}>
+        <input type="radio" name={radioName} checked={currentSelection === index} onChange={() => choose(index)} />
         <span>{option}</span>
       </label>)}
     </div>
-    <button type="button" disabled={selected === null} onClick={() => setChecked(true)}>Check answer</button>
-    {checked && <p className="tutor-quiz-feedback" role="status">
-      <strong>{selected === block.answer ? 'Correct!' : 'Not quite.'}</strong> {block.explanation}
+    <button type="button" disabled={currentSelection === null} onClick={check}>Check answer</button>
+    {currentChecked && <p className="tutor-quiz-feedback" role="status">
+      <strong>{currentSelection === block.answer ? 'Correct!' : 'Not quite.'}</strong> {block.explanation}
     </p>}
   </section>;
 }
@@ -89,10 +105,14 @@ function Memory({ block }: { block: Extract<LessonBlock, { type: 'memory' }> }) 
     <div className="tutor-step-detail" role="status"><strong>{block.cells[selected].name}</strong><p>{block.cells[selected].note}</p></div>
   </section>;
 }
-export function TutorLessonContent({ content }: { content: string }) {
+export function TutorLessonContent({ content, quizActivities = [], onQuizChange }: {
+  content: string;
+  quizActivities?: MultipleChoiceActivity[];
+  onQuizChange?: (id: string, selected: number, checked: boolean) => void;
+}) {
   const blocks = useMemo(() => parseLessonBlocks(content), [content]);
   return <div className="tutor-lesson-content">{blocks.map((block, index) =>
-    block.type === 'quiz' ? <Quiz key={index} block={block}/> :
+    block.type === 'quiz' ? <Quiz key={index} block={block} activity={quizActivities[blocks.slice(0, index).filter(b => b.type === 'quiz').length]} onChange={onQuizChange}/> :
       block.type === 'diagram' ? <Diagram key={index} block={block}/> :
       block.type === 'steps' ? <Steps key={index} block={block}/> :
       block.type === 'memory' ? <Memory key={index} block={block}/> :
