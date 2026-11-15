@@ -1,5 +1,6 @@
 import { readdir, realpath, stat, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { isSensitivePath } from './security';
 import type { ScanResult, TreeNode } from '../src/shared/types';
 
 const ignored = new Set(['.git', 'node_modules', 'dist', 'build', 'coverage', '.next', '.venv', 'venv', '__pycache__', 'target', 'vendor']);
@@ -22,8 +23,8 @@ export async function scanRepository(root: string): Promise<ScanResult> {
     entries.sort((a, b) => Number(b.isDirectory()) - Number(a.isDirectory()) || a.name.localeCompare(b.name));
     const nodes: TreeNode[] = [];
     for (const entry of entries) {
-      if (ignored.has(entry.name) || entry.isSymbolicLink()) continue;
       const child = path.join(relative, entry.name);
+      if (ignored.has(entry.name) || entry.isSymbolicLink() || isSensitivePath(child)) continue;
       if (entry.isDirectory()) nodes.push({ name: entry.name, path: child, type: 'directory', children: await walk(child) });
       else if (entry.isFile()) {
         nodes.push({ name: entry.name, path: child, type: 'file' });
@@ -40,6 +41,7 @@ export async function scanRepository(root: string): Promise<ScanResult> {
 
 export async function readRepositoryFile(root: string, relative: string): Promise<string> {
   if (typeof relative !== 'string' || !relative || path.isAbsolute(relative)) throw new Error('Invalid file path.');
+  if (isSensitivePath(relative)) throw new Error('Sensitive file access is blocked.');
   const canonicalRoot = await realpath(root);
   if (canonicalRoot !== root) throw new Error('Repository location changed. Import it again.');
   const requested = path.resolve(canonicalRoot, relative);
