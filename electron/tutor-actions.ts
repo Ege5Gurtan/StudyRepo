@@ -1,4 +1,4 @@
-import { buildTutorInput, validateTutorRequest } from './tutor';
+import { buildTutorInput, validateTutorRequest, TUTOR_TEACHING_GUIDANCE } from './tutor';
 import { retrieveNamedFileContext } from './tutor-source';
 import { redactSecrets } from './security';
 import type { TutorAction } from '../src/shared/types';
@@ -64,7 +64,7 @@ export async function askTutorWithActions(requestValue: unknown): Promise<TutorA
         store: false,
         max_output_tokens: 1200,
         parallel_tool_calls: false,
-        instructions: 'You are StudyRepo, a conversational coding tutor. Reply normally for explanations, hints, follow-up questions, and feedback. ' +
+        instructions: 'You are StudyRepo, a conversational coding tutor. Reply normally for explanations, hints, follow-up questions, and feedback. ' + TUTOR_TEACHING_GUIDANCE + ' ' +
           'When the student ASKS YOU TO CREATE, GENERATE, MAKE, OR GIVE A NEW CODING CHALLENGE, exercise, problem or set of challenges, ' +
           'ALWAYS call generate_challenge instead of writing a text-only exercise. ' +
           'This includes requests about a specific topic (e.g. "create challenge about tile mechanics") and requests for more exercises. ' +

@@ -88,3 +88,9 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - The app-level `sendConversationMessage` owns asynchronous Tutor requests, not a `TutorPanel` tied to a selected conversation. Use the initiating repository path and immutable conversation ID for every response and generated challenge.
 - Keep pending state indexed by repository and conversation; switching chats must not cancel work or update a different conversation. `appendConversationMessage` updates only a matching saved ID and ignores replies to deleted conversations.
 - Chat persistence remains the existing SQLite conversation archive, and rehydrated conversations need not retain transient Thinking states after application exit.
+
+## Interactive Tutor learning blocks
+
+- `src/study/lesson-blocks.ts` parses bounded, strongly validated `studyrepo-quiz` and `studyrepo-diagram` fenced JSON. Invalid blocks fall back to Markdown; do not interpret generated JSX, HTML, SVG, CSS or scripts.
+- `src/components/TutorLessonContent.tsx` renders only predefined React quiz and generic node/edge diagram widgets and delegates ordinary Markdown to `RichTutorMessage` for sanitization and highlighting.
+- `electron/tutor.ts` shares structured teaching guidance with the action route. Keep model tools for actual coding challenges separate from ungraded quiz widgets. Preserve chat persistence and source-file links.

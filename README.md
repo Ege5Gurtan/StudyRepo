@@ -182,3 +182,7 @@ StudyRepo blocks common credential and private-key paths in its file explorer an
 The OpenAI API key is read only from the Electron main-process environment; do not embed it in a source file or commit it. Local credential files are excluded by `.gitignore`, and a GitHub Actions security workflow checks Git history with Gitleaks and audits runtime dependencies with npm. You can run a local history scan with `gitleaks git --redact .` and a dependency audit with `npm audit --omit=dev --audit-level=high`.
 
 If a credential is found in a commit, **revoke or rotate it immediately**. Deleting the file in a new commit does not remove older Git objects; coordinate history cleanup with collaborators separately. Please report newly discovered exposures privately to the maintainers instead of posting credential values in public issues.
+
+## Interactive Tutor lessons
+
+The Tutor can optionally embed repository-agnostic **knowledge-check quizzes** and **concept/flow diagrams** within Markdown. Validated `studyrepo-quiz` and `studyrepo-diagram` JSON blocks render through predefined React components. Diagrams model a small set of labelled nodes and relationships, suitable for explanations across many languages and repositories; the AI must ground every relationship in supplied source context. Invalid blocks fall back to inert code. There is no model-authored executable SVG, HTML, JavaScript, or arbitrary component code. These are not general image generation or code execution. Quizzes are ungraded comprehension checks separate from coding challenges.

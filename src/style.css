@@ -417,3 +417,17 @@ input { accent-color: #8270e4; }
   .learning-workspace .challenge-compact-bar { flex-wrap: wrap; }
   .challenge-compact-label { flex-basis: 100%; }
 }
+
+/* Inert, validated learning widgets embedded in markdown Tutor replies. */
+.tutor-learning-widget { margin: 14px 0; padding: 13px; border: 1px solid var(--border); border-radius: 11px; background: var(--card); min-width: 0; }
+.tutor-learning-widget .tutor-widget-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .07em; color: var(--accent); }
+.tutor-learning-widget h4 { font-size: 13px; line-height: 1.4; margin: 9px 0 12px; }
+.tutor-learning-widget button { border: 1px solid var(--border); border-radius: 7px; background: var(--side); color: var(--text); padding: 7px 11px; cursor: pointer; }
+.tutor-learning-widget button:disabled { opacity: .5; cursor: default; }
+.tutor-quiz-options { display: grid; gap: 6px; margin-bottom: 12px; }
+.tutor-quiz-options label { display: flex; align-items: flex-start; gap: 9px; padding: 8px; border: 1px solid var(--border); border-radius: 7px; cursor: pointer; overflow-wrap: anywhere; }
+.tutor-quiz-options label.selected { border-color: var(--accent); }
+.tutor-quiz-options input { margin-top: 2px; accent-color: var(--accent); }
+.tutor-quiz-feedback { margin: 11px 0 0; line-height: 1.5; }
+.tutor-learning-widget svg { width: 100%; display: block; max-height: 620px; }
+.tutor-diagram-caption { font-size: 11px; line-height: 1.5; color: var(--muted); overflow-wrap: anywhere; }
