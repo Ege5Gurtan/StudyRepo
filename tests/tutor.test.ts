@@ -14,12 +14,23 @@ const base: TutorRequest = {
 afterEach(() => { vi.unstubAllGlobals(); });
 
 describe('AI tutor', () => {
-  it('detects broad repository tutorials without forcing lookups for unrelated questions', () => {
-    expect(requestsRepositoryTutorial('Create a tutorial to better understand the cpp codes in this repo')).toBe(true);
-    expect(requestsRepositoryTutorial('Help me understand this repository and learn C++')).toBe(true);
-    expect(needsRepositoryLookup('Teach me the code in my project')).toBe(true);
+  it('detects tutorials for multiple languages and mixed-language repositories', () => {
+    for (const question of [
+      'Create a tutorial to better understand the cpp codes in this repo',
+      'Help me understand this repository and learn C++',
+      'Teach me the Rust modules in this project',
+      'Create a tutorial for Python files',
+      'Walk me through the Go codebase',
+      'Explain the TypeScript and JavaScript code in this repository',
+      'Help me learn Kotlin source code',
+      'Create a tutorial for this mixed-language project'
+    ]) {
+      expect(requestsRepositoryTutorial(question)).toBe(true);
+      expect(needsRepositoryLookup(question)).toBe(true);
+    }
     expect(requestsRepositoryTutorial('Explain my loop')).toBe(false);
     expect(needsRepositoryLookup('How do references work?')).toBe(false);
+    expect(requestsRepositoryTutorial('Write a tutorial about photography')).toBe(false);
   });
 
   it('rejects invalid and oversized renderer requests', () => {

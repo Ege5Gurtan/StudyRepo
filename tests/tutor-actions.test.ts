@@ -80,7 +80,7 @@ describe('structured tutor actions', () => {
       expect(sent.instructions).toContain('multiple-choice');
     }
   });
-  it('investigates repository source before generating a broad C++ tutorial', async () => {
+  it('investigates repository source before generating language-agnostic tutorials', async () => {
     vi.stubEnv('OPENAI_API_KEY', 'test-key');
     const mock = vi.fn(async () => ({ ok: true, json: async () => ({
       output: [{ type: 'message', content: [{ type: 'output_text', text: 'Lesson one.' }] }]
@@ -96,7 +96,9 @@ describe('structured tutor actions', () => {
     expect(body.tools.map(t => t.name)).toContain('list_source_files');
     expect(JSON.stringify(body.input)).not.toContain('Partial repository sample');
     expect(body.instructions).toContain('ONE coherent first lesson');
-    expect(body.instructions).toContain('unfamiliar C++ symbol');
+    expect(body.instructions).toContain('language-specific constructs');
+    expect(body.instructions).toContain('mixed-language repositories');
+    expect(body.instructions).not.toContain('Do not assume familiarity with constructors');
   });
 
   it('does not allow structured actions outside Practice', async () => {

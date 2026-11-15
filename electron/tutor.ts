@@ -13,8 +13,11 @@ export const TUTOR_OUTPUT_CHARS = 20000;
 // a sampled file opening. More specific questions with supplied code may not
 // need an extra lookup.
 export function requestsRepositoryTutorial(question: string): boolean {
-  return /\b(?:tutorial|learning path|learn|teach|understand|walk\s*(?:me\s*)?through|explain)\b/i.test(question) &&
-    /\b(?:repo(?:sitory)?|codebase|project|source|(?:c\+\+|cpp|python|typescript|javascript|code)(?:\s+(?:in|of|for)\s+(?:this|the|my)\s+(?:repo(?:sitory)?|project))?|(?:this|the|my)\s+code)\b/i.test(question);
+  const learningIntent = /\b(?:tutorial|learning path|learn|teach|understand|walk\s*(?:me\s*)?through|explain)\b/i;
+  // Detect repository learning by the requested artifact, not a hardcoded list of
+  // programming languages. This covers unfamiliar languages and mixed projects.
+  const repositorySubject = /\b(?:repo(?:sitory)?|codebase|project|source(?:\s+(?:code|files?))?|code|files?|functions?|modules?|classes?|scripts?|programming\s+languages?)\b/i;
+  return learningIntent.test(question) && repositorySubject.test(question);
 }
 
 export function needsRepositoryLookup(question: string): boolean {
@@ -25,9 +28,10 @@ export function needsRepositoryLookup(question: string): boolean {
 export const TUTOR_TUTORIAL_GUIDANCE = [
   'For a broad tutorial request, teach ONE coherent first lesson rather than summarizing several files or delivering the whole curriculum.',
   'Begin with a brief roadmap (three to six prerequisite-ordered topics) based only on source you have inspected, then teach the first topic fully.',
+  'Choose the instructional language and framework from the student request and verified repository context; never presume C++, Unreal, or any other technology.',
   'Default to beginner level unless the student requests a different level or their conversation clearly establishes expertise. Adapt the depth, not the correctness.',
-  'For the first lesson: state the learning objective, give an accessible intuition or familiar analogy, show a short exact source excerpt with its file path and verified line range, explain each unfamiliar C++ symbol and framework-specific type, walk through a concrete input/output or execution example, explain why the code exists, then ask one small understanding question.',
-  'Do not assume familiarity with constructors, classes, templates, pointers, references, inheritance, namespaces, or Unreal Engine. Define any prerequisite you use in plain language. Do not over-explain already mastered concepts.',
+  'For the first lesson: state the learning objective, give an accessible intuition or familiar analogy, show a short exact source excerpt with its file path and verified line range, explain unfamiliar syntax, language-specific constructs, and framework or library types only when they occur in the inspected code, walk through a concrete input/output or execution example, explain why the code exists, then ask one small understanding question.',
+  'Identify the languages and relevant frameworks from verified files, keeping mixed-language repositories in scope. Teach concepts specific to the language and code being studied rather than defaulting to any one language or framework. Explain prerequisites in plain language without over-explaining concepts the student already knows.',
   'If explaining a function, inspect its declaration and relevant caller when possible; distinguish directly verified behavior from inference.',
   'Keep the lesson conversational with short paragraphs and progressive steps; do not flood the learner with unrelated snippets or a long catalog of functions.',
   'Encourage the student to ask about the current concept or continue to the next lesson. Do not create a coding challenge unless explicitly requested.',
