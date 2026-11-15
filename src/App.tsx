@@ -252,7 +252,7 @@ export default function App() {
           }
           answer = [lesson.lesson.introduction, lesson.lesson.explanation,
             '### Coding challenge: ' + lesson.lesson.challenge.title,
-            lesson.lesson.challenge.description].join('\\n\\n');
+            lesson.lesson.challenge.description].join('\n\n');
         }
       } else {
         answer = await window.studyRepo.askTutor({
