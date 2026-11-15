@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Editor from '@monaco-editor/react';
 import type { ChallengeAttempt, ChallengeHistoryEntry, LearningEvaluation, LearningSession } from '../shared/types';
 
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export function LearningWorkspace({ session, challengeId, entries, activeIndex, attempts, code, onCodeChange, evaluation, busy, error, onEvaluate, onRestart, onAdvance, onSkip, onNavigate, onRestoreAttempt, onShowTutor }: Props) {
+  const [historyOpen, setHistoryOpen] = useState(false);
   if (!session) return <section className="practice-workspace learning-welcome" aria-label="Adaptive learning workspace">
     <div className="learning-hero">
       <p className="eyebrow">PERSONALIZED LEARNING</p>
@@ -37,29 +39,30 @@ export function LearningWorkspace({ session, challengeId, entries, activeIndex, 
   const passed = attempts.some(attempt => attempt.evaluation.status === 'passed');
   return <section className="practice-workspace learning-workspace" aria-label="Adaptive learning workspace">
     <nav className="challenge-history" aria-label="Challenge history">
-      <div className="challenge-history-heading">
-        <strong>Challenge history</strong>
-        <span className="muted">{activeIndex + 1} / {entries.length}</span>
+      <div className="challenge-navigator">
+        <button type="button" className="challenge-history-toggle" aria-expanded={historyOpen} aria-controls="challenge-history-list" onClick={() => setHistoryOpen(open => !open)}>
+          <span className="challenge-navigator-label">Challenges <span className="muted">{activeIndex + 1} / {entries.length}</span></span>
+          <span className="challenge-navigator-title"><span className="eyebrow">#{activeIndex + 1}</span> {challenge.title}</span>
+          <span className="challenge-toggle-icon" aria-hidden="true">{historyOpen ? '▴' : '▾'}</span>
+        </button>
         <div className="challenge-history-arrows">
-          <button aria-label="Previous challenge" disabled={busy || activeIndex <= 0} onClick={() => onNavigate(activeIndex - 1)}>← Previous</button>
-          <button aria-label="Next saved challenge" disabled={busy || activeIndex >= entries.length - 1} onClick={() => onNavigate(activeIndex + 1)}>Next →</button>
+          <button type="button" aria-label="Previous challenge" title="Previous challenge" disabled={busy || activeIndex <= 0} onClick={() => onNavigate(activeIndex - 1)}>←</button>
+          <button type="button" aria-label="Next saved challenge" title="Next saved challenge" disabled={busy || activeIndex >= entries.length - 1} onClick={() => onNavigate(activeIndex + 1)}>→</button>
         </div>
+        <button type="button" className="challenge-chat-link" onClick={onShowTutor}>View instructions in AI Tutor →</button>
+        <button type="button" className="learning-restart" onClick={onRestart}>New learning goal</button>
       </div>
-      <div className="challenge-history-items">{entries.map((entry, index) => <button
+      {historyOpen && <div id="challenge-history-list" className="challenge-history-items">{entries.map((entry, index) => <button
         key={entry.id} type="button" disabled={busy}
         aria-current={activeIndex === index ? 'step' : undefined}
         className={activeIndex === index ? 'challenge-history-active' : ''}
         title={entry.session.lesson.challenge.title}
-        onClick={() => onNavigate(index)}>
-        <span>{index + 1}. {entry.session.lesson.challenge.title}</span>
+        onClick={() => { onNavigate(index); setHistoryOpen(false); }}>
+        <span className="challenge-history-number">{index + 1}</span>
+        <span className="challenge-history-name">{entry.session.lesson.challenge.title}</span>
         <small>{entry.status === 'skipped' ? 'Skipped' : entry.attempts.some(a => a.evaluation.status === 'passed') ? 'AI passed' : entry.attempts.length ? 'Reviewed' : 'Draft'}</small>
-      </button>)}</div>
+      </button>)}</div>}
     </nav>
-    <div className="challenge-compact-bar">
-      <div className="challenge-compact-label"><span className="eyebrow">CHALLENGE {activeIndex + 1}</span><strong>{challenge.title}</strong></div>
-      <button type="button" className="challenge-chat-link" onClick={onShowTutor}>View instructions in AI Tutor →</button>
-      <button type="button" className="learning-restart" onClick={onRestart}>New learning goal</button>
-    </div>
     <div className="practice-editor">
       <div className="practice-editor-heading">{challenge.language} · Your scratchpad (repository files are unchanged)</div>
       <div className="practice-editor-body"><Editor key={challengeId} language={challenge.language.toLowerCase().includes('typescript') ? 'typescript' : challenge.language.toLowerCase().includes('javascript') ? 'javascript' : challenge.language.toLowerCase().includes('python') ? 'python' : challenge.language.toLowerCase().includes('c++') ? 'cpp' : challenge.language.toLowerCase()} value={code} theme="vs-dark" onChange={value => onCodeChange(value ?? '')} options={{ minimap: { enabled: false }, fontSize: 14, automaticLayout: true, scrollBeyondLastLine: false, wordWrap: 'on' }}/></div>
