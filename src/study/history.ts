@@ -85,7 +85,7 @@ export function validateArchive(value: unknown): LearningArchive {
     (archive.entries.length === 0 && archive.activeIndex !== -1) ||
     (archive.entries.length > 0 && archive.activeIndex === -1)) throw new Error('Invalid challenge history.');
   if (!Array.isArray(archive.messages) || archive.messages.length > 40 || !archive.messages.every(m =>
-    !!m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.length <= 16000 &&
+    !!m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.length <= 20000 &&
     (m.challengeId === undefined || (typeof m.challengeId === 'string' && m.challengeId.length <= 100)) &&
     (m.activityIds === undefined || (Array.isArray(m.activityIds) && m.activityIds.length <= 3 &&
       m.activityIds.every(id => typeof id === 'string' && id.length <= 100)))
