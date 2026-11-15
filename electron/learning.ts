@@ -42,6 +42,7 @@ export async function retrieveLearningContext(root: string, goal: string): Promi
     file,
     score: words.reduce((score, word) => score + (file.toLowerCase().includes(word) ? 5 : 0), 0)
       + (/(?:^|[\\/])(?:src|source|app)[\\/]/i.test(file) ? 2 : 0)
+      + (wantsCpp ? (/\.(?:cpp|cc|cxx|h|hpp)$/i.test(file) ? 8 : /\.cs$/i.test(file) ? -6 : 0) : 0)
       - (/(?:test|spec|fixture|mock)/i.test(file) ? 3 : 0)
   })).sort((a, b) => b.score - a.score || a.file.localeCompare(b.file));
   const results: Array<ContextFile & { score: number }> = [];
