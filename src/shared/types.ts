@@ -133,7 +133,26 @@ export interface ChallengeHistoryEntry {
   status: 'active' | 'skipped';
   createdAt: string;
 }
+export interface GuidedLearningTopic {
+  id: string;
+  title: string;
+  objective: string;
+}
+export interface GuidedLearningPath {
+  goal: string;
+  topics: GuidedLearningTopic[];
+  currentIndex: number;
+  completed: string[];
+  lesson: { title: string; explanation: string; references: LearningReference[] };
+}
+export interface GuidedLearningRequest {
+  repository: string;
+  goal: string;
+  mode: 'start' | 'next';
+  path?: GuidedLearningPath;
+}
 export interface LearningArchive {
+  guidedPath?: GuidedLearningPath;
   entries: ChallengeHistoryEntry[];
   activeIndex: number;
   messages: TutorMessage[];
@@ -157,6 +176,7 @@ export interface StudyRepoAPI {
   askTutor(request: TutorRequest): Promise<string>;
   askTutorWithActions(request: TutorRequest): Promise<TutorAction>;
   generateLesson(request: LearningGenerateRequest): Promise<LearningSession>;
+  generateGuidedLesson(request: GuidedLearningRequest): Promise<GuidedLearningPath>;
   evaluateSolution(request: LearningEvaluateRequest): Promise<LearningEvaluation>;
   loadLearningArchive(repository: string): Promise<LearningArchive>;
   saveLearningArchive(repository: string, archive: LearningArchive): Promise<void>;
