@@ -182,3 +182,7 @@ StudyRepo blocks common credential and private-key paths in its file explorer an
 The OpenAI API key is read only from the Electron main-process environment; do not embed it in a source file or commit it. Local credential files are excluded by `.gitignore`, and a GitHub Actions security workflow checks Git history with Gitleaks and audits runtime dependencies with npm. You can run a local history scan with `gitleaks git --redact .` and a dependency audit with `npm audit --omit=dev --audit-level=high`.
 
 If a credential is found in a commit, **revoke or rotate it immediately**. Deleting the file in a new commit does not remove older Git objects; coordinate history cleanup with collaborators separately. Please report newly discovered exposures privately to the maintainers instead of posting credential values in public issues.
+
+## Interactive Tutor lessons
+
+The Tutor can embed optional **knowledge-check quizzes** and **interactive grid-distance diagrams** within ordinary Markdown. Each is represented by a fenced `studyrepo-quiz` or `studyrepo-grid` JSON block and rendered by a predefined React component. The code and JSON are validated, with unknown or invalid blocks displayed as inert text; model-generated scripts are never run. Quizzes are local, ungraded comprehension checks; they do not modify challenge progress. Grid controls let learners move point B and inspect Chebyshev/grid distance (diagonal movement allowed). These widgets are not general-purpose AI-generated illustrations or a code-execution environment.
