@@ -445,3 +445,61 @@ input { accent-color: #8270e4; }
 .tutor-memory-cells button { display: flex; flex-direction: column; align-items: stretch; gap: 6px; text-align: left; min-width: 0; }
 .tutor-memory-name { font-weight: 650; font-size: 11px; }
 .tutor-memory-cells code { overflow-wrap: anywhere; white-space: normal; font-size: 12px; }
+
+/* Expandable, conversation-preserving AI Tutor reading mode. Code remains mounted
+   behind the reading panel; return to code without losing chat or drafts. */
+.tutor-expand-button {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 7px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.tutor-expand-button:hover, .tutor-expand-button:focus-visible { border-color: var(--accent); }
+.app > main > .tutor-panel.tutor-expanded {
+  width: min(920px, calc(100% - 20px));
+  min-width: 0;
+  padding: 20px clamp(16px, 5vw, 54px);
+  gap: 12px;
+  z-index: 4;
+  box-shadow: -18px 0 45px #0004;
+}
+.tutor-panel.tutor-expanded .tutor-chat {
+  gap: 20px;
+  padding: 6px 2px 16px;
+}
+.tutor-panel.tutor-expanded .tutor-message.tutor {
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 6px 0 20px;
+}
+.tutor-panel.tutor-expanded .tutor-message.student {
+  max-width: min(80%, 610px);
+  padding: 13px 18px;
+  font-size: 14px;
+}
+.tutor-panel.tutor-expanded .tutor-rich-text {
+  font-size: 15px;
+  line-height: 1.78;
+}
+.tutor-panel.tutor-expanded .tutor-rich-text p { margin-bottom: 17px; }
+.tutor-panel.tutor-expanded .tutor-rich-text h1 { font-size: 25px; margin-top: 24px; }
+.tutor-panel.tutor-expanded .tutor-rich-text h2 { font-size: 21px; margin-top: 24px; }
+.tutor-panel.tutor-expanded .tutor-rich-text h3 { font-size: 17px; margin-top: 20px; }
+.tutor-panel.tutor-expanded .tutor-rich-text pre code { font-size: 13px; }
+.tutor-panel.tutor-expanded .tutor-rich-text table { font-size: 13px; }
+.tutor-panel.tutor-expanded .tutor-compose, .tutor-panel.tutor-expanded .tutor-actions {
+  width: 100%;
+  max-width: 760px;
+  margin-inline: auto;
+}
+.tutor-panel.tutor-expanded .tutor-learning-widget {
+  padding: 18px;
+}
+@media (max-width: 760px) {
+  .app > main > .tutor-panel.tutor-expanded { width: 100%; padding: 14px; }
+  .tutor-panel.tutor-expanded .tutor-rich-text { font-size: 14px; }
+}
