@@ -3,7 +3,6 @@ import { isSensitivePath } from './security';
 import type { TreeNode, TutorRequest } from '../src/shared/types';
 
 const sourceExtensions = /\.(?:c|cc|cpp|cxx|h|hpp|hxx|ts|tsx|js|jsx|mjs|py|go|rs|java|cs)$/i;
-const protectedPath = /(?:^|[\\/])(?:\.env(?:\..*)?|\.git|node_modules|secrets?|credentials?|private|keys?)(?:[\\/]|$)/i;
 const MAX_EXCERPT = 26000;
 
 export function namedFileInQuestion(question: string): string | null {
