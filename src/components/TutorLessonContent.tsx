@@ -53,10 +53,48 @@ function Diagram({ block }: { block: Extract<LessonBlock, { type: 'diagram' }> }
     <p className="tutor-diagram-caption">{block.edges.map(e => `${block.nodes.find(n => n.id === e.from)?.label} → ${block.nodes.find(n => n.id === e.to)?.label}`).join(' · ')}</p>
   </section>;
 }
+function Steps({ block }: { block: Extract<LessonBlock, { type: 'steps' }> }) {
+  const [active, setActive] = useState(0);
+  return <section className="tutor-learning-widget" aria-label="Step-by-step execution">
+    <span className="tutor-widget-eyebrow">STEP-BY-STEP</span>
+    <h4>{block.title}</h4>
+    <ol className="tutor-steps-list">
+      {block.steps.map((step, index) => <li key={index}>
+        <button type="button" className={index === active ? 'tutor-step-selected' : ''}
+          aria-current={index === active ? 'step' : undefined} onClick={() => setActive(index)}>
+          <span className="tutor-step-number">{index + 1}</span>{step.title}
+        </button>
+      </li>)}
+    </ol>
+    <div className="tutor-step-detail" role="status"><strong>{block.steps[active].title}</strong><p>{block.steps[active].description}</p></div>
+    <div className="tutor-step-navigation">
+      <button type="button" disabled={active === 0} onClick={() => setActive(a => Math.max(0, a-1))}>Previous</button>
+      <span>{active + 1} / {block.steps.length}</span>
+      <button type="button" disabled={active === block.steps.length - 1} onClick={() => setActive(a => Math.min(block.steps.length-1,a+1))}>Next</button>
+    </div>
+  </section>;
+}
+function Memory({ block }: { block: Extract<LessonBlock, { type: 'memory' }> }) {
+  const [selected, setSelected] = useState(0);
+  return <section className="tutor-learning-widget" aria-label="Memory and value illustration">
+    <span className="tutor-widget-eyebrow">VALUES &amp; REFERENCES</span>
+    <h4>{block.title}</h4>
+    <div className="tutor-memory-cells">
+      {block.cells.map((cell, index) => <button type="button" key={index} className={index === selected ? 'tutor-cell-selected' : ''}
+        aria-pressed={index === selected} onClick={() => setSelected(index)}>
+        <span className="tutor-memory-name">{cell.name}</span>
+        <code>{cell.value}</code>
+      </button>)}
+    </div>
+    <div className="tutor-step-detail" role="status"><strong>{block.cells[selected].name}</strong><p>{block.cells[selected].note}</p></div>
+  </section>;
+}
 export function TutorLessonContent({ content }: { content: string }) {
   const blocks = useMemo(() => parseLessonBlocks(content), [content]);
   return <div className="tutor-lesson-content">{blocks.map((block, index) =>
     block.type === 'quiz' ? <Quiz key={index} block={block}/> :
       block.type === 'diagram' ? <Diagram key={index} block={block}/> :
+      block.type === 'steps' ? <Steps key={index} block={block}/> :
+      block.type === 'memory' ? <Memory key={index} block={block}/> :
         <RichTutorMessage key={index} content={block.content}/>)}</div>;
 }
