@@ -67,6 +67,12 @@ describe('adaptive practice layout', () => {
     expect(html).toContain('Previous challenge');
     expect(html).toContain('Similar challenge');
   });
+  it('offers a toggle for expanded AI Tutor reading mode', () => {
+    const html = renderToStaticMarkup(<TutorPanel repository="/repo" context="Practice" code="" expanded={true} onToggleExpanded={() => {}} messages={[]} />);
+    expect(html).toContain('tutor-expanded');
+    expect(html).toContain('Exit reading mode');
+    expect(html).toContain('Back to code');
+  });
   it('shows challenge instructions and source references in AI Tutor with navigation back to editor', () => {
     const entry = { id: 'challenge-1', session, code: 'function identity(x) {}', attempts: [], status: 'active' as const, createdAt: '2026-11-14T00:00:00Z' };
     const html = renderToStaticMarkup(

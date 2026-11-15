@@ -194,3 +194,7 @@ Tutor Q&A now uses a larger response budget (3,600 output tokens) and up to 60 s
 ### More diagram types
 
 Lessons can now also include validated `studyrepo-steps` (clickable execution walkthroughs) and `studyrepo-memory` (selectable values/references illustration) blocks. These work across languages and frameworks; they are conceptual educational visuals and are not live execution, actual stack/heap inspection, or image generation.
+
+## AI Tutor reading mode
+
+Use **Expand** in the AI Tutor header to switch from the compact code-side panel to a wider reading overlay with larger typography and more room for examples, code blocks, quizzes and diagrams. **Back to code** restores the narrow panel without discarding drafts or conversations. The code editor remains mounted behind the expanded panel; reading mode intentionally covers some of the workspace. The preference is kept in memory while the app is open.
