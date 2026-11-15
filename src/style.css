@@ -429,11 +429,5 @@ input { accent-color: #8270e4; }
 .tutor-quiz-options label.selected { border-color: var(--accent); }
 .tutor-quiz-options input { margin-top: 2px; accent-color: var(--accent); }
 .tutor-quiz-feedback { margin: 11px 0 0; line-height: 1.5; }
-.tutor-learning-widget svg { width: 100%; display: block; max-height: 300px; }
-.tutor-learning-widget .grid-empty { fill: #23272b; stroke: #505760; }
-.tutor-learning-widget .grid-a { fill: #178473; stroke: #93ded3; }
-.tutor-learning-widget .grid-b { fill: #307cbb; stroke: #a1d3ff; }
-.tutor-grid-controls { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
-.tutor-grid-controls label { font-size: 12px; display: grid; gap: 5px; }
-.tutor-grid-controls input { width: 100%; accent-color: var(--accent); }
-.tutor-grid-result { padding-top: 10px; font-size: 12px; margin-bottom: 0; }
+.tutor-learning-widget svg { width: 100%; display: block; max-height: 620px; }
+.tutor-diagram-caption { font-size: 11px; line-height: 1.5; color: var(--muted); overflow-wrap: anywhere; }
