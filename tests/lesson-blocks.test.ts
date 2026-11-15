@@ -14,10 +14,10 @@ describe('repository-agnostic Tutor lesson blocks', () => {
   it('parses generic memory diagrams and interactive execution steps', () => {
     const memory = JSON.stringify({title:'Variables', cells:[{name:'value',value:'42',note:'Integer variable'}]});
     const steps = JSON.stringify({title:'Function call', steps:[{title:'Call',description:'Pass argument'},{title:'Return',description:'Use result'}]});
-    expect(parseLessonBlocks('\\`\\`\\`studyrepo-memory\\n'+memory+'\\n\\`\\`\\`')[0]).toMatchObject({type:'memory',cells:[{name:'value',value:'42'}]});
-    expect(parseLessonBlocks('\\`\\`\\`studyrepo-steps\\n'+steps+'\\n\\`\\`\\`')[0]).toMatchObject({type:'steps',steps:[{title:'Call'},{title:'Return'}]});
+    expect(parseLessonBlocks('\`\`\`studyrepo-memory\n'+memory+'\n\`\`\`')[0]).toMatchObject({type:'memory',cells:[{name:'value',value:'42'}]});
+    expect(parseLessonBlocks('\`\`\`studyrepo-steps\n'+steps+'\n\`\`\`')[0]).toMatchObject({type:'steps',steps:[{title:'Call'},{title:'Return'}]});
     const invalid = JSON.stringify({title:'Variables',cells:[{name:'x',value:'a'.repeat(1000),note:'test'}]});
-    expect(parseLessonBlocks('\\`\\`\\`studyrepo-memory\\n'+invalid+'\\n\\`\\`\\`')[0].type).toBe('markdown');
+    expect(parseLessonBlocks('\`\`\`studyrepo-memory\n'+invalid+'\n\`\`\`')[0].type).toBe('markdown');
   });
   it('rejects unknown diagram node references and excessive diagrams', () => {
     const broken = '{"title":"Flow","nodes":[{"id":"a","label":"A"},{"id":"b","label":"B"}],"edges":[{"from":"a","to":"missing"}]}';
