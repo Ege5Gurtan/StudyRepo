@@ -29,6 +29,14 @@ describe('AI tutor', () => {
     expect(input.at(-1)?.content).toBe(base.question);
   });
 
+  it('accepts and safely bounds long previous assistant explanations', () => {
+    const history = [{ role: 'assistant' as const, content: 'A'.repeat(12000) }];
+    expect(() => validateTutorRequest({ ...base, history })).not.toThrow();
+    const input = buildTutorInput({ ...base, history });
+    expect(input[1].content).toHaveLength(6000);
+    expect(() => validateTutorRequest({ ...base, history: [{ role: 'user', content: 'X'.repeat(3001) }] })).toThrow();
+  });
+
   it('fails without an API key and never invokes fetch', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
@@ -45,10 +53,12 @@ describe('AI tutor', () => {
     await expect(askTutor(base, 'test-secret', 'gpt-6-luna')).resolves.toContain('Declare i');
     const [url, options] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://api.openai.com/v1/responses');
-    const body = JSON.parse(String(options.body)) as { store: boolean; model: string; input: unknown[] };
+    const body = JSON.parse(String(options.body)) as { store: boolean; model: string; input: unknown[]; max_output_tokens: number; instructions: string };
     expect(body.store).toBe(false);
     expect(body.model).toBe('gpt-6-luna');
     expect(body.input).toHaveLength(2);
+    expect(body.max_output_tokens).toBeGreaterThan(1200);
+    expect(body.instructions).toContain('worked example');
     expect(options.headers).toEqual(expect.objectContaining({ Authorization: 'Bearer test-secret' }));
   });
 
