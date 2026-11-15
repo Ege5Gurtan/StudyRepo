@@ -24,6 +24,9 @@ export function RichTutorMessage({ content }: Props) {
     root.querySelectorAll<HTMLPreElement>('pre').forEach(pre => {
       const code = pre.querySelector('code');
       if (!code) return;
+      // Effects can be re-run (notably by React StrictMode). Never allow
+      // toolbar controls to accumulate on a retained code block.
+      pre.querySelectorAll(':scope > .tutor-code-toolbar').forEach(toolbar => toolbar.remove());
       const raw = code.textContent ?? '';
       const languageClass = [...code.classList].find(name => name.startsWith('language-'));
       const language = languageClass?.slice('language-'.length) ?? 'plaintext';
@@ -43,7 +46,7 @@ export function RichTutorMessage({ content }: Props) {
         });
       };
       copy.addEventListener('click', onCopy);
-      cleanups.push(() => copy.removeEventListener('click', onCopy));
+      cleanups.push(() => { copy.removeEventListener('click', onCopy); bar.remove(); });
       bar.append(label, copy);
       pre.prepend(bar);
       // Monaco colorization uses the already-bundled editor grammar and does
@@ -62,7 +65,6 @@ export function RichTutorMessage({ content }: Props) {
         if (normalized(candidate.textContent ?? '') === normalized(raw) && raw.trim()) {
           code.innerHTML = sanitized;
         } // Otherwise keep the original, readable fenced code.
-
       }).catch(() => { /* plain code remains readable */ });
     });
 
