@@ -198,3 +198,9 @@ Lessons can now also include validated `studyrepo-steps` (clickable execution wa
 ## AI Tutor reading mode
 
 Use **Expand** in the AI Tutor header to switch from the compact code-side panel to a wider reading overlay with larger typography and more room for examples, code blocks, quizzes and diagrams. **Back to code** restores the narrow panel without discarding drafts or conversations. The code editor remains mounted behind the expanded panel; reading mode intentionally covers some of the workspace. The preference is kept in memory while the app is open.
+
+## Explanation-first learning and activity history
+
+StudyRepo no longer creates a coding challenge automatically when someone starts a conversation with a general learning goal. The Tutor first answers using a bounded selection of safe source excerpts, with optional knowledge-check questions. Users can explicitly ask for a coding challenge, choose the **Coding challenge** quick action, or request **Multiple choice** instead.
+
+Comprehension quizzes are stored separately from coding challenges in the same local conversation archive. **Activities** history distinguishes `Challenge` and `MultipleChoice`, shows answer status, and supports revisiting a saved quiz. Existing challenge records and code drafts remain compatible. This first version records quiz selections; it does not grade coding ability, award points, or execute repository code.
