@@ -511,3 +511,7 @@ input { accent-color: #8270e4; }
 .learning-quiz-focus { overflow: auto; min-height: 0; flex: 1; padding: 16px; border: 1px solid var(--border); border-radius: 9px; background: var(--card); }
 .learning-quiz-focus .tutor-learning-widget { max-width: 720px; }
 .learning-quiz-focus > button { border: 1px solid var(--border); border-radius: 7px; padding: 9px 12px; background: var(--side); color: var(--accent); cursor: pointer; }
+
+/* Keep code readable even if syntax tokenization is unavailable. */
+.tutor-rich-text pre code { min-height: 1.4em; color: #e2e8f0; }
+.tutor-rich-text pre code span { background: transparent; }
