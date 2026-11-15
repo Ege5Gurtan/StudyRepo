@@ -100,3 +100,7 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - Ordinary and tool-enabled Tutor answers share `TUTOR_TEACHING_GUIDANCE` and output limits from `electron/tutor.ts`.
 - History validation distinguishes brief user prompts from lengthy assistant lessons. Cap prior assistant context sent to the model, preserve bounded request validation, and continue redacting secrets.
 - Longer explanations consume more tokens; do not interpret response length as evidence of source coverage.
+
+### Additional visual lesson schemas
+
+`studyrepo-steps` contains a bounded array of titled steps and descriptions; `studyrepo-memory` contains bounded named values and explanatory notes. Render them with predefined React controls and reject excessive or malformed data. The AI should select based on learning concept, not repository identity. No model-authored markup or executable code.

@@ -1,12 +1,14 @@
 export type LessonBlock =
   | { type: 'markdown'; content: string }
   | { type: 'quiz'; question: string; options: string[]; answer: number; explanation: string }
+  | { type: 'steps'; title: string; steps: { title: string; description: string }[] }
+  | { type: 'memory'; title: string; cells: { name: string; value: string; note: string }[] }
   | { type: 'diagram'; title: string; nodes: { id: string; label: string }[]; edges: { from: string; to: string; label?: string }[] };
 
 // Model-generated diagrams are validated data. No arbitrary SVG, JSX, HTML or code.
 export function parseLessonBlocks(content: string): LessonBlock[] {
   const blocks: LessonBlock[] = [];
-  const pattern = /(^|\n)```studyrepo-(quiz|diagram)\s*\n([\s\S]*?)\n```(?=\n|$)/g;
+  const pattern = /(^|\n)```studyrepo-(quiz|diagram|steps|memory)\s*\n([\s\S]*?)\n```(?=\n|$)/g;
   let start = 0;
   for (const match of content.matchAll(pattern)) {
     const index = match.index ?? 0;
@@ -23,6 +25,21 @@ export function parseLessonBlocks(content: string): LessonBlock[] {
             Number.isInteger(value.answer) && (value.answer as number) >= 0 && (value.answer as number) < value.options.length &&
             typeof value.explanation === 'string' && value.explanation.length <= 800) {
             parsed = { type: 'quiz', question: value.question, options: value.options as string[], answer: value.answer as number, explanation: value.explanation };
+          }
+          if (match[2] === 'steps' && typeof value.title === 'string' && value.title.length <= 160 &&
+            Array.isArray(value.steps) && value.steps.length >= 2 && value.steps.length <= 8 &&
+            value.steps.every((step: unknown) => step && typeof step === 'object' &&
+              typeof (step as {title?:unknown}).title === 'string' && (step as {title:string}).title.length <= 100 &&
+              typeof (step as {description?:unknown}).description === 'string' && (step as {description:string}).description.length <= 400)) {
+            parsed = { type: 'steps', title: value.title, steps: value.steps as {title:string;description:string}[] };
+          }
+          if (match[2] === 'memory' && typeof value.title === 'string' && value.title.length <= 160 &&
+            Array.isArray(value.cells) && value.cells.length >= 1 && value.cells.length <= 12 &&
+            value.cells.every((cell: unknown) => cell && typeof cell === 'object' &&
+              typeof (cell as {name?:unknown}).name === 'string' && (cell as {name:string}).name.length <= 40 &&
+              typeof (cell as {value?:unknown}).value === 'string' && (cell as {value:string}).value.length <= 80 &&
+              typeof (cell as {note?:unknown}).note === 'string' && (cell as {note:string}).note.length <= 250)) {
+            parsed = { type: 'memory', title: value.title, cells: value.cells as {name:string;value:string;note:string}[] };
           }
           if (match[2] === 'diagram' && typeof value.title === 'string' && value.title.length <= 160 &&
             Array.isArray(value.nodes) && value.nodes.length >= 2 && value.nodes.length <= 8 &&

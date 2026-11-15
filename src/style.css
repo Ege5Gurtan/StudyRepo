@@ -431,3 +431,17 @@ input { accent-color: #8270e4; }
 .tutor-quiz-feedback { margin: 11px 0 0; line-height: 1.5; }
 .tutor-learning-widget svg { width: 100%; display: block; max-height: 620px; }
 .tutor-diagram-caption { font-size: 11px; line-height: 1.5; color: var(--muted); overflow-wrap: anywhere; }
+
+/* Generic explanatory visualizations (no repository-specific graphics). */
+.tutor-steps-list { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 10px 0; list-style: none; }
+.tutor-steps-list li { margin: 0; }
+.tutor-steps-list button { display: flex; align-items: center; gap: 5px; text-align: left; max-width: 100%; }
+.tutor-steps-list button.tutor-step-selected, .tutor-memory-cells button.tutor-cell-selected { border-color: var(--accent); background: var(--bg); }
+.tutor-step-number { display: inline-grid; place-items: center; background: var(--accent); color: white; width: 18px; height: 18px; border-radius: 50%; flex: none; }
+.tutor-step-detail { background: var(--side); padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; overflow-wrap: anywhere; }
+.tutor-step-detail p { margin: 6px 0 0; line-height: 1.5; }
+.tutor-step-navigation { margin-top: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 11px; }
+.tutor-memory-cells { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr)); gap: 7px; margin: 10px 0; }
+.tutor-memory-cells button { display: flex; flex-direction: column; align-items: stretch; gap: 6px; text-align: left; min-width: 0; }
+.tutor-memory-name { font-weight: 650; font-size: 11px; }
+.tutor-memory-cells code { overflow-wrap: anywhere; white-space: normal; font-size: 12px; }
