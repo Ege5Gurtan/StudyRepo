@@ -27,8 +27,8 @@ describe('rich AI Tutor formatting', () => {
   });
   it('keeps fenced C++ source readable in generated HTML', () => {
     const fence = String.fromCharCode(96).repeat(3);
-    const source = 'int32 CountFromDensity(float Density) {\\n  return FMath::FloorToInt32(Density);\\n}';
-    const html = markdownToHtml(fence + 'cpp\\n' + source + '\\n' + fence);
+    const source = 'int32 CountFromDensity(float Density) {\n  return FMath::FloorToInt32(Density);\n}';
+    const html = markdownToHtml(fence + 'cpp\n' + source + '\n' + fence);
     expect(html).toContain('language-cpp');
     expect(html).toContain('CountFromDensity');
     expect(html).toContain('FloorToInt32');
