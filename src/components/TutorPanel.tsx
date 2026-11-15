@@ -10,7 +10,6 @@ interface Props {
   expanded?: boolean;
   onToggleExpanded?: () => void;
   learningStarted?: boolean;
-  onStartLearning?: (goal: string) => Promise<string>;
   onGenerateChallenges?: (request: string, scope: 'single' | 'set') => Promise<string>;
   messages?: TutorMessage[];
   quizActivities?: MultipleChoiceActivity[];
@@ -28,7 +27,7 @@ interface Props {
   onOpenSource?: (file: string, line: number) => void;
 }
 
-export function TutorPanel({ repository, context, code, sourceFile, diagnostics = [], hidden = false, expanded = false, onToggleExpanded, learningStarted = true, onStartLearning, onGenerateChallenges, messages: controlledMessages, quizActivities = [], onQuizChange, onMessagesChange, pending = false, onSendMessage, activeChallenge, challengeEntries = [], focusChallengeId, onOpenChallenge, onOpenSource }: Props) {
+export function TutorPanel({ repository, context, code, sourceFile, diagnostics = [], hidden = false, expanded = false, onToggleExpanded, learningStarted = true, onGenerateChallenges, messages: controlledMessages, quizActivities = [], onQuizChange, onMessagesChange, pending = false, onSendMessage, activeChallenge, challengeEntries = [], focusChallengeId, onOpenChallenge, onOpenSource }: Props) {
   const chatRef = useRef<HTMLDivElement>(null);
   const instructionsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -57,9 +56,7 @@ export function TutorPanel({ repository, context, code, sourceFile, diagnostics 
     setBusy(true);
     setError('');
     try {
-      const answer = !learningStarted && onStartLearning
-        ? await onStartLearning(q)
-        : context === 'Practice' && onGenerateChallenges
+      const answer = context === 'Practice' && onGenerateChallenges
           ? await (async () => {
               const action = await window.studyRepo.askTutorWithActions({
                 repository, context, code: code.slice(0, 12000), sourceFile,
