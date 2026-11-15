@@ -6,6 +6,13 @@ import type { CodingChallenge, LearningEvaluateRequest, LearningEvaluation, Lear
 const allowedExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.cpp', '.cc', '.cxx', '.h', '.hpp', '.py', '.go', '.rs', '.java', '.cs']);
 const MAX_CODE = 8000;
 const MAX_GOAL = 1500;
+// Build outputs and Unreal's generated glue are not good teaching examples:
+// prefer hand-authored source over machine-produced declarations.
+export function isGeneratedSourcePath(file: string): boolean {
+  const normalized = file.replace(/\\\\/g, '/');
+  return /(?:^|\/)(?:intermediate|binaries|deriveddatacache|node_modules|\.git|\.vs)(?:\/|$)/i.test(normalized) ||
+    /(?:\.generated\.h|\.gen\.cpp|\.g\.cpp)$/i.test(normalized);
+}
 
 export interface ContextFile {
   file: string;
@@ -18,7 +25,7 @@ export function sourceCandidates(nodes: TreeNode[]): string[] {
   const walk = (items: TreeNode[]) => {
     for (const node of items) {
       if (node.type === 'directory') walk(node.children ?? []);
-      else if (allowedExtensions.has(path.extname(node.path).toLowerCase()) && !isSensitivePath(node.path)) files.push(node.path);
+      else if (allowedExtensions.has(path.extname(node.path).toLowerCase()) && !isSensitivePath(node.path) && !isGeneratedSourcePath(node.path)) files.push(node.path);
     }
   };
   walk(nodes);
@@ -30,6 +37,7 @@ export async function retrieveLearningContext(root: string, goal: string): Promi
   if (scan.repository.path !== root) throw new Error('Repository location changed. Import again.');
   const words = [...new Set((goal.toLowerCase().match(/[a-z][a-z0-9_]{2,}/g) ?? []).filter(w => !['want', 'learn', 'about', 'with', 'from', 'this', 'code', 'repo', 'repository', 'how', 'and', 'the', 'for'].includes(w)))].slice(0, 15);
   const paths = sourceCandidates(scan.tree).slice(0, 1000);
+  const wantsCpp = /(?:\\bc\\+\\+\\b|\\bcpp\\b|\\bc plus plus\\b)/i.test(goal) || goal.includes('C++');
   const ranked = paths.map(file => ({
     file,
     score: words.reduce((score, word) => score + (file.toLowerCase().includes(word) ? 5 : 0), 0)
