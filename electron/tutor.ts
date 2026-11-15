@@ -13,13 +13,13 @@ export const TUTOR_OUTPUT_CHARS = 20000;
 // a sampled file opening. More specific questions with supplied code may not
 // need an extra lookup.
 export function requestsRepositoryTutorial(question: string): boolean {
-  return /\\b(?:tutorial|learning path|learn|teach|understand|walk\\s*(?:me\\s*)?through|explain)\\b/i.test(question) &&
-    /\\b(?:repo(?:sitory)?|codebase|project|source|(?:c\\+\\+|cpp|python|typescript|javascript|code)(?:\\s+(?:in|of|for)\\s+(?:this|the|my)\\s+(?:repo(?:sitory)?|project))?|(?:this|the|my)\\s+code)\\b/i.test(question);
+  return /\b(?:tutorial|learning path|learn|teach|understand|walk\s*(?:me\s*)?through|explain)\b/i.test(question) &&
+    /\b(?:repo(?:sitory)?|codebase|project|source|(?:c\+\+|cpp|python|typescript|javascript|code)(?:\s+(?:in|of|for)\s+(?:this|the|my)\s+(?:repo(?:sitory)?|project))?|(?:this|the|my)\s+code)\b/i.test(question);
 }
 
 export function needsRepositoryLookup(question: string): boolean {
   return requestsRepositoryTutorial(question) ||
-    /\\b(?:game rules|codebase|source files|project architecture|trace the|where is|where are|actual behavior)\\b/i.test(question);
+    /\b(?:game rules|codebase|source files|project architecture|trace the|where is|where are|actual behavior)\b/i.test(question);
 }
 
 export const TUTOR_TUTORIAL_GUIDANCE = [
