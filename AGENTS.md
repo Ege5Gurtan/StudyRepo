@@ -104,3 +104,8 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 ### Additional visual lesson schemas
 
 `studyrepo-steps` contains a bounded array of titled steps and descriptions; `studyrepo-memory` contains bounded named values and explanatory notes. Render them with predefined React controls and reject excessive or malformed data. The AI should select based on learning concept, not repository identity. No model-authored markup or executable code.
+
+## AI Tutor reading layout
+
+- The expanded reading mode is App-level state passed into `TutorPanel`, not a distinct chat route or another Tutor instance. Existing pending requests, chat persistence and challenge links must keep working while toggling.
+- `src/style.css` expands the panel over the existing workspace, with an accessible return-to-code control. Never unmount Monaco or reset conversation history merely to change widths.
