@@ -51,10 +51,12 @@ describe('read-only AI source retrieval', () => {
   it('feeds model-requested source back into the next response without storing server-side', async () => {
     const root = await fixture();
     try {
+      let requestCount = 0;
       const fetchMock = vi.fn(async (_url: string, init: RequestInit) => {
+        requestCount++;
         const body = JSON.parse(String(init.body)) as { store: boolean; input: unknown[]; tools: { name: string }[] };
         expect(body.store).toBe(false);
-        if (fetchMock.mock.calls.length === 1) {
+        if (requestCount === 1) {
           expect(body.tools.map(t => t.name)).toContain('read_source');
           return { ok: true, json: async () => ({ output: [{ type: 'function_call', call_id: 'call1',
             name: 'read_source', arguments: JSON.stringify({ file: path.join('Source', 'WorldManager.cpp'), start_line: 1, end_line: 4 }) }] }) };
