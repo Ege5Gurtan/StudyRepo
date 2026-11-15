@@ -127,3 +127,9 @@ For changes, run the relevant tests and `npm run lint`, `npm run typecheck`, and
 - `electron/tutor-retrieval.ts` exposes bounded search_code, find_symbol, and read_source model tools to Practice and Explorer. Tools use the scanner allowlist, `readRepositoryFile` security checks, secret redaction, a per-answer call/context budget, and source line references.
 - Never expose arbitrary paths, writes, commands, or unfiltered file bytes. Keep model tool calls validated and replay results with `store: false`.
 - Explicit challenge requests must continue to require the existing generate_challenge action, not source tools. Preserve conversation isolation, source warnings, and regression coverage in `tests/tutor-retrieval.test.ts`.
+
+## Readable Tutor source and evidence
+
+- Tutor fenced code tokenization must use locally controlled CSS classes, not Monaco inline colors from a mismatched editor theme. Preserve plain-text fallback and inert DOM assembly.
+- Source retrieval can require an initial read-only investigation for codebase-oriented questions; discovery includes list_source_files, with bounded tool calls and source redaction.
+- Only successful read_source operations are recorded in backend-generated source trace metadata. TutorPanel renders a verified file/line list linked to Explorer; existing conversation text and quiz blocks remain compatible.
