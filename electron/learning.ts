@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { isSensitivePath, redactSecrets } from './security';
 import { scanRepository, readRepositoryFile } from './repository';
 import type { CodingChallenge, LearningEvaluateRequest, LearningEvaluation, LearningGenerateRequest, LearningLesson, LearningReference, LearningSession, LearningTopic, TreeNode } from '../src/shared/types';
 
@@ -18,7 +19,7 @@ export function sourceCandidates(nodes: TreeNode[]): string[] {
   const walk = (items: TreeNode[]) => {
     for (const node of items) {
       if (node.type === 'directory') walk(node.children ?? []);
-      else if (allowedExtensions.has(path.extname(node.path).toLowerCase()) && !sensitive.test(node.path)) files.push(node.path);
+      else if (allowedExtensions.has(path.extname(node.path).toLowerCase()) && !isSensitivePath(node.path)) files.push(node.path);
     }
   };
   walk(nodes);
@@ -102,7 +103,7 @@ async function structuredResponse(instructions: string, prompt: string, name: st
       method: 'POST', headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL || 'gpt-6-luna', store: false, max_output_tokens: 2400,
-        instructions, input: prompt,
+        instructions, input: redactSecrets(prompt),
         text: { format: { type: 'json_schema', name, strict: true, schema: definition } }
       }), signal: controller.signal
     });
